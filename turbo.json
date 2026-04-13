@@ -5,7 +5,27 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "NEXT_PUBLIC_APP_URL",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "ANTHROPIC_API_KEY",
+        "RUNWAY_API_KEY",
+        "KLING_API_KEY",
+        "VIDEO_PROVIDER",
+        "INNGEST_EVENT_KEY",
+        "INNGEST_SIGNING_KEY",
+        "CRON_SECRET",
+        "SCRIPT_MIN_SCORE_THRESHOLD",
+        "IDEAS_PER_BATCH",
+        "LEARNING_MIN_SAMPLE_SIZE",
+        "LEARNING_EMA_ALPHA",
+        "LEARNING_WEIGHT_MIN",
+        "LEARNING_WEIGHT_MAX",
+        "IDEA_SIMILARITY_THRESHOLD"
+      ]
     },
     "dev": {
       "cache": false,
