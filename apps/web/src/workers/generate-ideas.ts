@@ -16,11 +16,12 @@ export const fnGenerateIdeas = inngest.createFunction(
     const theme = (event.data.theme as string | undefined) ?? undefined;
 
     // Gather context
-    const [characters, patterns, recentIdeas] = await step.run('gather-context', async () => {
+    const [characters, patterns, recentIdeas, operatorInstructions] = await step.run('gather-context', async () => {
       return Promise.all([
         db.getActiveCharacters(),
         db.getActivePatterns(),
         db.getRecentIdeas(50),
+        db.getSetting('idea_instructions'),
       ]);
     });
 
@@ -33,6 +34,7 @@ export const fnGenerateIdeas = inngest.createFunction(
         trends: [], // TODO: integrate trend fetching
         count,
         theme,
+        operator_instructions: operatorInstructions || undefined,
       });
     });
 

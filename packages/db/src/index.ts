@@ -380,6 +380,28 @@ export class DB {
     return data ?? [];
   }
 
+  // --- Operator Settings ---
+
+  async getSetting(key: string): Promise<string> {
+    try {
+      const { data, error } = await this.client
+        .from('operator_settings')
+        .select('value')
+        .eq('key', key)
+        .single();
+      if (error) return '';
+      return (data as { value: string } | null)?.value ?? '';
+    } catch {
+      return '';
+    }
+  }
+
+  async setSetting(key: string, value: string): Promise<void> {
+    await this.client
+      .from('operator_settings')
+      .upsert({ key, value, updated_at: new Date().toISOString() });
+  }
+
   async getDashboardStats() {
     const [ideas, scripts, videos_approval, videos_7d] = await Promise.all([
       this.client.from('ideas').select('id', { count: 'exact', head: true }).eq('status', 'pending'),

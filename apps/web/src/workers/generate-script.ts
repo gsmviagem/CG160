@@ -19,15 +19,16 @@ export const fnGenerateScript = inngest.createFunction(
 
       if (!idea) throw new Error(`Idea ${idea_id} not found`);
 
-      const [character, patterns, weightRows] = await Promise.all([
+      const [character, patterns, weightRows, operatorInstructions] = await Promise.all([
         idea.character_id ? db.getCharacterById(idea.character_id) : Promise.resolve(null),
         db.getActivePatterns(),
         db.getLearningWeights('script_scoring'),
+        db.getSetting('script_instructions'),
       ]);
 
       const weights = Object.fromEntries(weightRows.map(w => [w.feature_name, w.current_weight]));
 
-      return { idea, character, patterns, weights };
+      return { idea, character, patterns, weights, operatorInstructions };
     });
 
     // Generate script from Claude
@@ -38,6 +39,7 @@ export const fnGenerateScript = inngest.createFunction(
         patterns,
         scoring_weights: weights,
         target_duration_seconds: 30,
+        operator_instructions: operatorInstructions || undefined,
       });
     });
 

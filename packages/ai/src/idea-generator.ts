@@ -26,7 +26,8 @@ export interface IdeaGenerationContext {
   patterns: PatternLibraryEntry[];
   recent_ideas: Array<{ title: string; concept: string }>;
   performance_context?: string; // summary of what's been working
-  theme?: string; // optional topic/theme requested by operator
+  theme?: string;               // optional topic/theme requested by operator
+  operator_instructions?: string; // persistent operator rules from settings
   count: number;
 }
 
@@ -74,6 +75,10 @@ function buildIdeaGenerationPrompt(ctx: IdeaGenerationContext): string {
     ? `\n## TEMA OBRIGATÓRIO — Foco desta geração\n${ctx.theme}\nTodas as ideias DEVEM explorar este tema de formas criativas e diversas.\n`
     : '';
 
+  const operatorSection = ctx.operator_instructions?.trim()
+    ? `\n## REGRAS DO OPERADOR — Seguir obrigatoriamente\n${ctx.operator_instructions.trim()}\n`
+    : '';
+
   return `You are a creative director and viral content strategist for CG 160, an AI-native content studio.
 
 IMPORTANT: Write ALL output in Brazilian Portuguese (pt-BR). Titles, concepts, hooks, rationales — everything in pt-BR.
@@ -88,7 +93,7 @@ ${trendList}
 
 ## High-Weight Content Patterns (prioritize these)
 ${topPatterns}
-${themeSection}${performanceContext}
+${themeSection}${operatorSection}${performanceContext}
 ## Recent Ideas (AVOID similar concepts — be novel)
 ${recentIdeas}
 

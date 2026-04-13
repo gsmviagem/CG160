@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: '/analytics', label: 'Analytics' },
   { href: '/learning', label: 'Learning Loop' },
   { href: '/characters', label: 'Characters' },
+  { href: '/settings', label: 'Instruções' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

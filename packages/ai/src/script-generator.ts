@@ -22,6 +22,7 @@ export interface ScriptGenerationContext {
     humor_type?: string;
   };
   performance_context?: string;
+  operator_instructions?: string; // persistent operator rules from settings
 }
 
 export interface GeneratedScriptRaw {
@@ -73,6 +74,10 @@ Define their visual appearance, personality, and voice clearly.`;
     ? `\n## What has been performing best\n${ctx.performance_context}\n`
     : '';
 
+  const operatorSection = ctx.operator_instructions?.trim()
+    ? `\n## OPERATOR RULES — Must follow exactly\n${ctx.operator_instructions.trim()}\n`
+    : '';
+
   const targetDuration = target_duration_seconds ?? 30;
 
   return `You are the head writer and creative director at CG 160, an AI-native viral content studio.
@@ -98,7 +103,7 @@ ${characterSection}
 
 ## Content Patterns to Apply
 ${relevantPatterns}
-${performanceContext}
+${operatorSection}${performanceContext}
 ## Scoring Priorities (write to maximize these)
 ${prioritizedDimensions}
 
