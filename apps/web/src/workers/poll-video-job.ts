@@ -17,7 +17,7 @@ export const fnPollVideoJob = inngest.createFunction(
   {
     id: 'poll-video-job',
     name: 'Poll Video Generation Job',
-    concurrency: 10,
+    concurrency: 3,
     retries: 0, // We handle retry logic ourselves
   },
   { event: 'cg160/videos.poll' },
