@@ -402,6 +402,22 @@ export class DB {
       .upsert({ key, value, updated_at: new Date().toISOString() });
   }
 
+  async getTodayStats(): Promise<{ ideas_today: number; scripts_today: number }> {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const iso = todayStart.toISOString();
+
+    const [ideas, scripts] = await Promise.all([
+      this.client.from('ideas').select('id', { count: 'exact', head: true }).gte('created_at', iso),
+      this.client.from('scripts').select('id', { count: 'exact', head: true }).gte('created_at', iso),
+    ]);
+
+    return {
+      ideas_today:   ideas.count   ?? 0,
+      scripts_today: scripts.count ?? 0,
+    };
+  }
+
   async getDashboardStats() {
     const [ideas, scripts, videos_approval, videos_7d] = await Promise.all([
       this.client.from('ideas').select('id', { count: 'exact', head: true }).eq('status', 'pending'),

@@ -1,12 +1,17 @@
 import { getDB } from '@/lib/supabase';
 import { GenerateButton } from '@/components/ActionButton';
 import { GeneratingBanner } from '@/components/GeneratingBanner';
+import { ApiUsageWidget } from '@/components/ApiUsageWidget';
 
 export const revalidate = 60;
 
 async function getStats() {
   const db = getDB();
-  return db.getDashboardStats();
+  const [stats, today] = await Promise.all([
+    db.getDashboardStats(),
+    db.getTodayStats(),
+  ]);
+  return { ...stats, ...today };
 }
 
 export default async function DashboardPage() {
@@ -49,6 +54,11 @@ export default async function DashboardPage() {
             <div className="text-sm text-gray-500 mt-1">{card.label}</div>
           </div>
         ))}
+      </div>
+
+      {/* API Usage */}
+      <div className="mb-6">
+        <ApiUsageWidget ideasToday={stats.ideas_today} scriptsToday={stats.scripts_today} />
       </div>
 
       {/* Pipeline Status */}
