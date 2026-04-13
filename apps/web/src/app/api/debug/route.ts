@@ -4,20 +4,15 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { inngest } from '@/lib/inngest';
+import { sendInngestEvent } from '@/lib/inngest';
 
 export async function GET() {
   const eventKey = process.env.INNGEST_EVENT_KEY;
   const signingKey = process.env.INNGEST_SIGNING_KEY;
 
-  // Test inngest send with a dummy/no-op event
-  let sendResult: string;
-  try {
-    await inngest.send({ name: 'cg160/debug.ping', data: {} } as never);
-    sendResult = 'OK';
-  } catch (err: unknown) {
-    sendResult = err instanceof Error ? err.message : String(err);
-  }
+  // Test via direct REST call
+  const result = await sendInngestEvent('cg160/debug.ping', {});
+  const sendResult = result.ok ? 'OK' : result.error ?? 'unknown error';
 
   return NextResponse.json({
     env: {

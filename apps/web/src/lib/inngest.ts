@@ -10,6 +10,34 @@ export const inngest = new Inngest({
   eventKey: process.env.INNGEST_EVENT_KEY,
 });
 
+// ---- Direct REST send (bypasses SDK environment detection) -----------------
+// Use this instead of inngest.send() to avoid "Branch environment does not exist" errors.
+
+export async function sendInngestEvent(
+  name: string,
+  data: Record<string, unknown>
+): Promise<{ ok: boolean; error?: string }> {
+  const eventKey = process.env.INNGEST_EVENT_KEY;
+  if (!eventKey) {
+    return { ok: false, error: 'INNGEST_EVENT_KEY not set' };
+  }
+  try {
+    const res = await fetch(`https://inn.gs/e/${eventKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify([{ name, data }]),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      return { ok: false, error: `Inngest HTTP ${res.status}: ${text}` };
+    }
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: msg };
+  }
+}
+
 // ---- Event Types -------------------------------------------
 export type Events = {
   'cg160/ideas.generate': {
