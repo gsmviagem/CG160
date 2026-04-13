@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
 
     // If request came from a form (not JSON), redirect back
     if (!contentType.includes('application/json')) {
-      return NextResponse.redirect(new URL('/dashboard/approval', request.url));
+      return NextResponse.redirect(new URL('/approval', request.url));
     }
 
     return NextResponse.json({ success: true });
