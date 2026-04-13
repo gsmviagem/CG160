@@ -23,16 +23,16 @@ export async function sendInngestEvent(
   }
 
   // Try without env header first (production key), fall back with env header if needed
-  const attempts = [
-    { headers: { 'Content-Type': 'application/json' } },
-    { headers: { 'Content-Type': 'application/json', 'x-inngest-env': 'production' } },
+  const attempts: Record<string, string>[] = [
+    { 'Content-Type': 'application/json' },
+    { 'Content-Type': 'application/json', 'x-inngest-env': 'production' },
   ];
 
-  for (const attempt of attempts) {
+  for (const headers of attempts) {
     try {
       const res = await fetch(`https://inn.gs/e/${eventKey}`, {
         method: 'POST',
-        headers: attempt.headers,
+        headers,
         body: JSON.stringify([{ name, data }]),
       });
       if (res.ok) return { ok: true };
