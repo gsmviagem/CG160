@@ -3,13 +3,13 @@ import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
-  { href: '/dashboard/approval', label: 'Approval Queue' },
-  { href: '/dashboard/ideas', label: 'Ideas' },
-  { href: '/dashboard/scripts', label: 'Scripts' },
-  { href: '/dashboard/videos', label: 'Videos' },
-  { href: '/dashboard/analytics', label: 'Analytics' },
-  { href: '/dashboard/learning', label: 'Learning Loop' },
-  { href: '/dashboard/characters', label: 'Characters' },
+  { href: '/approval', label: 'Approval Queue' },
+  { href: '/ideas', label: 'Ideas' },
+  { href: '/scripts', label: 'Scripts' },
+  { href: '/videos', label: 'Videos' },
+  { href: '/analytics', label: 'Analytics' },
+  { href: '/learning', label: 'Learning Loop' },
+  { href: '/characters', label: 'Characters' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
