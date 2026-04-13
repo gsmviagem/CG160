@@ -173,7 +173,7 @@ export async function generateScript(
 
   const response = await callGemini(prompt, {
     model: 'llama-3.3-70b-versatile',
-    maxOutputTokens: 8192,
+    maxOutputTokens: 4000,
     temperature: 0.85,
   });
 
@@ -209,7 +209,7 @@ Address the rejection reason directly. Be meaningfully different and better.`;
 
   const response = await callGemini(basePrompt + regenerationSuffix, {
     model: 'llama-3.3-70b-versatile',
-    maxOutputTokens: 8192,
+    maxOutputTokens: 4000,
     temperature: 0.95,
   });
 
