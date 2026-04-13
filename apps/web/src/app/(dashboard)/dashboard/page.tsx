@@ -25,6 +25,23 @@ export default async function DashboardPage() {
         <p className="text-gray-500 mt-1 text-sm">Content engine status</p>
       </div>
 
+      {/* Quick Actions */}
+      <div className="flex gap-3 mb-6 flex-wrap">
+        <form action="/api/generate" method="POST">
+          <input type="hidden" name="type" value="ideas" />
+          <input type="hidden" name="count" value="5" />
+          <button type="submit" className="text-sm px-4 py-2 bg-indigo-700 hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors">
+            + Gerar Ideias
+          </button>
+        </form>
+        <a href="/approval" className="text-sm px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg font-medium transition-colors">
+          Ver Fila de Aprovação →
+        </a>
+        <a href="/scripts" className="text-sm px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg font-medium transition-colors">
+          Ver Scripts →
+        </a>
+      </div>
+
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statCards.map(card => (

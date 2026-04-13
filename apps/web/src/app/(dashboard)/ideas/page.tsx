@@ -10,15 +10,82 @@ export const revalidate = 0;
 
 async function getAllIdeas() {
   const db = getDB();
-  const [pending, approved, rejected] = await Promise.all([
+  const [pending, approved, scripted, rejected] = await Promise.all([
     db.getIdeasByStatus('pending', 30),
     db.getIdeasByStatus('approved', 30),
+    db.getIdeasByStatus('scripted' as never, 30),
     db.getIdeasByStatus('rejected', 20),
   ]);
-  return { pending, approved, rejected };
+  return { pending, approved, scripted, rejected };
 }
 
-function IdeaRow({ idea }: { idea: Idea }) {
+function GenerateIdeasButton() {
+  return (
+    <form action="/api/generate" method="POST">
+      <input type="hidden" name="type" value="ideas" />
+      <input type="hidden" name="count" value="5" />
+      <button
+        type="submit"
+        className="text-sm px-4 py-2 bg-indigo-700 hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors"
+      >
+        + Gerar Ideias
+      </button>
+    </form>
+  );
+}
+
+function GenerateScriptButton({ ideaId }: { ideaId: string }) {
+  return (
+    <form action="/api/generate" method="POST" className="inline">
+      <input type="hidden" name="type" value="script" />
+      <input type="hidden" name="idea_id" value={ideaId} />
+      <button
+        type="submit"
+        className="text-xs px-3 py-1.5 bg-blue-800 hover:bg-blue-700 text-blue-100 rounded font-medium transition-colors"
+      >
+        Gerar Script
+      </button>
+    </form>
+  );
+}
+
+function ApproveButton({ ideaId }: { ideaId: string }) {
+  return (
+    <form action="/api/approval" method="POST" className="inline">
+      <input type="hidden" name="entity_type" value="idea" />
+      <input type="hidden" name="entity_id" value={ideaId} />
+      <input type="hidden" name="action" value="approved" />
+      <button
+        type="submit"
+        className="text-xs px-3 py-1.5 bg-green-800 hover:bg-green-700 text-green-100 rounded font-medium transition-colors"
+      >
+        Aprovar
+      </button>
+    </form>
+  );
+}
+
+function RejectButton({ ideaId }: { ideaId: string }) {
+  return (
+    <form action="/api/approval" method="POST" className="inline">
+      <input type="hidden" name="entity_type" value="idea" />
+      <input type="hidden" name="entity_id" value={ideaId} />
+      <input type="hidden" name="action" value="rejected" />
+      <button
+        type="submit"
+        className="text-xs px-3 py-1.5 bg-red-900 hover:bg-red-800 text-red-100 rounded font-medium transition-colors"
+      >
+        Rejeitar
+      </button>
+    </form>
+  );
+}
+
+function IdeaRow({ idea, showActions = false, showScriptBtn = false }: {
+  idea: Idea;
+  showActions?: boolean;
+  showScriptBtn?: boolean;
+}) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-gray-700 transition-colors">
       <div className="flex items-start justify-between gap-4">
@@ -46,9 +113,23 @@ function IdeaRow({ idea }: { idea: Idea }) {
             <p className="text-xs text-blue-400 italic mt-1">"{idea.hook_summary}"</p>
           )}
           {idea.rejection_reason && (
-            <p className="text-xs text-red-400 mt-1">Rejected: {idea.rejection_reason}</p>
+            <p className="text-xs text-red-400 mt-1">Motivo: {idea.rejection_reason}</p>
+          )}
+
+          {/* Action buttons */}
+          {(showActions || showScriptBtn) && (
+            <div className="flex gap-2 mt-3 flex-wrap">
+              {showActions && (
+                <>
+                  <ApproveButton ideaId={idea.id} />
+                  <RejectButton ideaId={idea.id} />
+                </>
+              )}
+              {showScriptBtn && <GenerateScriptButton ideaId={idea.id} />}
+            </div>
           )}
         </div>
+
         <div className="flex-shrink-0 text-right">
           <div className={`text-xl font-bold ${scoreColor(idea.total_score)}`}>
             {formatScore(idea.total_score)}
@@ -60,71 +141,99 @@ function IdeaRow({ idea }: { idea: Idea }) {
   );
 }
 
+function SectionHeader({ label, count, color }: { label: string; count: number; color: string }) {
+  return (
+    <h2 className={`text-sm font-semibold ${color} uppercase tracking-wider mb-3`}>
+      {label} ({count})
+    </h2>
+  );
+}
+
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="text-center py-10 text-gray-700 border border-dashed border-gray-800 rounded-lg">
-      <div className="text-sm">No {label} ideas</div>
+    <div className="text-center py-8 text-gray-700 border border-dashed border-gray-800 rounded-lg">
+      <div className="text-sm">Nenhuma ideia {label}</div>
     </div>
   );
 }
 
 export default async function IdeasPage() {
-  const { pending, approved, rejected } = await getAllIdeas();
-  const total = pending.length + approved.length + rejected.length;
+  const { pending, approved, scripted, rejected } = await getAllIdeas();
+  const total = pending.length + approved.length + scripted.length + rejected.length;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
+      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Ideas</h1>
-          <p className="text-gray-500 mt-1 text-sm">{total} total ideas generated</p>
+          <h1 className="text-2xl font-bold text-white">Ideias</h1>
+          <p className="text-gray-500 mt-1 text-sm">{total} ideias no total</p>
         </div>
-        <div className="flex gap-4 text-sm">
-          <div className="text-center">
-            <div className="text-yellow-400 font-bold text-lg">{pending.length}</div>
-            <div className="text-gray-600 text-xs">Pending</div>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-4 text-sm">
+            <div className="text-center">
+              <div className="text-yellow-400 font-bold text-lg">{pending.length}</div>
+              <div className="text-gray-600 text-xs">Pendentes</div>
+            </div>
+            <div className="text-center">
+              <div className="text-green-400 font-bold text-lg">{approved.length}</div>
+              <div className="text-gray-600 text-xs">Aprovadas</div>
+            </div>
+            <div className="text-center">
+              <div className="text-blue-400 font-bold text-lg">{scripted.length}</div>
+              <div className="text-gray-600 text-xs">Com Script</div>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-green-400 font-bold text-lg">{approved.length}</div>
-            <div className="text-gray-600 text-xs">Approved</div>
-          </div>
-          <div className="text-center">
-            <div className="text-red-400 font-bold text-lg">{rejected.length}</div>
-            <div className="text-gray-600 text-xs">Rejected</div>
-          </div>
+          <GenerateIdeasButton />
         </div>
       </div>
 
-      {/* Pending */}
+      {/* Pending — show approve/reject buttons */}
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-yellow-400 uppercase tracking-wider mb-3">
-          Pending Review ({pending.length})
-        </h2>
+        <SectionHeader label="Pendentes" count={pending.length} color="text-yellow-400" />
         {pending.length === 0
-          ? <EmptyState label="pending" />
-          : <div className="space-y-3">{pending.map(idea => <IdeaRow key={idea.id} idea={idea} />)}</div>
+          ? <EmptyState label="pendente" />
+          : <div className="space-y-3">
+              {pending.map(idea => (
+                <IdeaRow key={idea.id} idea={idea} showActions />
+              ))}
+            </div>
         }
       </section>
 
-      {/* Approved */}
+      {/* Approved — show Generate Script button */}
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-green-400 uppercase tracking-wider mb-3">
-          Approved ({approved.length})
-        </h2>
+        <SectionHeader label="Aprovadas — aguardando script" count={approved.length} color="text-green-400" />
         {approved.length === 0
-          ? <EmptyState label="approved" />
-          : <div className="space-y-3">{approved.map(idea => <IdeaRow key={idea.id} idea={idea} />)}</div>
+          ? <EmptyState label="aprovada aguardando script" />
+          : <div className="space-y-3">
+              {approved.map(idea => (
+                <IdeaRow key={idea.id} idea={idea} showScriptBtn />
+              ))}
+            </div>
         }
       </section>
+
+      {/* Scripted — script already generated */}
+      {scripted.length > 0 && (
+        <section className="mb-8">
+          <SectionHeader label="Script gerado" count={scripted.length} color="text-blue-400" />
+          <div className="space-y-3">
+            {scripted.map(idea => (
+              <IdeaRow key={idea.id} idea={idea} showScriptBtn />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Rejected */}
       {rejected.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-red-400 uppercase tracking-wider mb-3">
-            Rejected ({rejected.length})
-          </h2>
+          <SectionHeader label="Rejeitadas" count={rejected.length} color="text-red-400" />
           <div className="space-y-3">
-            {rejected.map(idea => <IdeaRow key={idea.id} idea={idea} />)}
+            {rejected.map(idea => (
+              <IdeaRow key={idea.id} idea={idea} />
+            ))}
           </div>
         </section>
       )}
@@ -132,8 +241,10 @@ export default async function IdeasPage() {
       {total === 0 && (
         <div className="text-center py-20 text-gray-600">
           <div className="text-4xl mb-3">💡</div>
-          <div className="text-lg text-gray-500">No ideas yet</div>
-          <div className="text-sm mt-1">The daily cron will generate ideas automatically</div>
+          <div className="text-lg text-gray-500">Nenhuma ideia ainda</div>
+          <div className="text-sm mt-2 text-gray-600">
+            Clique em <strong className="text-indigo-400">+ Gerar Ideias</strong> para começar
+          </div>
         </div>
       )}
     </div>
