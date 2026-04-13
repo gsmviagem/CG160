@@ -1,5 +1,6 @@
 import { getDB } from '@/lib/supabase';
 import { GenerateButton } from '@/components/ActionButton';
+import { GeneratingBanner } from '@/components/GeneratingBanner';
 
 export const revalidate = 60;
 
@@ -37,6 +38,8 @@ export default async function DashboardPage() {
           </a>
         </div>
       </div>
+
+      <GeneratingBanner />
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

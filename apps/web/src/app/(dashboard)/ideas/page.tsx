@@ -1,6 +1,7 @@
 import { getDB } from '@/lib/supabase';
 import { formatScore, scoreColor, statusBadgeColor, relativeTime } from '@/lib/utils';
 import { ApprovalButton, GenerateButton } from '@/components/ActionButton';
+import { GeneratingBanner } from '@/components/GeneratingBanner';
 import type { Idea } from '@cg160/types';
 
 export const revalidate = 0;
@@ -122,6 +123,8 @@ export default async function IdeasPage() {
           <GenerateButton type="ideas" count={5} label="+ Gerar Ideias" variant="primary" />
         </div>
       </div>
+
+      <GeneratingBanner />
 
       {/* Pending */}
       <section className="mb-8">

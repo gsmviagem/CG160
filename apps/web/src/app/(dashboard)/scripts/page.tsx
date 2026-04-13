@@ -1,5 +1,6 @@
 import { getDB } from '@/lib/supabase';
 import { formatScore, scoreColor, statusBadgeColor, relativeTime } from '@/lib/utils';
+import { GeneratingBanner } from '@/components/GeneratingBanner';
 import type { Script } from '@cg160/types';
 
 export const revalidate = 0;
@@ -116,7 +117,7 @@ function ScriptCard({ script }: { script: Script }) {
       {/* Character Bible */}
       {(metadata as Record<string, string>)?.character_visual_bible && (
         <div className="px-4 py-3 border-b border-gray-800">
-          <div className="text-xs text-yellow-400 font-medium mb-2">BÍBLIA DO PERSONAGEM</div>
+          <div className="text-xs text-yellow-400 font-medium mb-2">PERFIL DO PERSONAGEM</div>
           <p className="text-sm text-gray-300">{metadata.character_visual_bible}</p>
         </div>
       )}
@@ -191,6 +192,8 @@ export default async function ScriptsPage() {
           {total} script{total !== 1 ? 's' : ''} — com pacote completo para Veo 3
         </p>
       </div>
+
+      <GeneratingBanner />
 
       {total === 0 && (
         <div className="text-center py-20 text-gray-600">

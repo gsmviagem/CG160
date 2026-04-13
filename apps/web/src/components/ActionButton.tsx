@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { setGenerating } from '@/components/GeneratingBanner';
 
 type Variant = 'success' | 'danger' | 'neutral' | 'primary';
 
@@ -108,11 +109,10 @@ export function GenerateButton({
         const msg = data.detail ?? data.error ?? res.statusText;
         throw new Error(msg);
       }
+      // Activate the GeneratingBanner so user can see progress
+      setGenerating(type);
       setState('done');
-      setTimeout(() => {
-        router.refresh();
-        setState('idle');
-      }, 1500);
+      setTimeout(() => setState('idle'), 1200);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error('GenerateButton error:', msg);
