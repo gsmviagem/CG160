@@ -20,6 +20,21 @@ import type {
 } from '@cg160/types';
 import { callGroq as callClaude } from './providers/groq';
 
+/** Parse instruction blocks stored as JSON array, or fall back to plain text. */
+function parseInstructions(raw: string | undefined): string {
+  if (!raw?.trim()) return '';
+  try {
+    const blocks = JSON.parse(raw) as Array<{ title?: string; content?: string }>;
+    if (Array.isArray(blocks)) {
+      return blocks
+        .filter(b => b.content?.trim())
+        .map(b => b.title?.trim() ? `### ${b.title}\n${b.content}` : b.content ?? '')
+        .join('\n\n');
+    }
+  } catch {}
+  return raw;
+}
+
 export interface IdeaGenerationContext {
   characters: Character[];
   trends: Trend[];
@@ -75,8 +90,8 @@ function buildIdeaGenerationPrompt(ctx: IdeaGenerationContext): string {
     ? `\n## TEMA OBRIGATÓRIO — Foco desta geração\n${ctx.theme}\nTodas as ideias DEVEM explorar este tema de formas criativas e diversas.\n`
     : '';
 
-  const operatorSection = ctx.operator_instructions?.trim()
-    ? `\n## REGRAS DO OPERADOR — Seguir obrigatoriamente\n${ctx.operator_instructions.trim()}\n`
+  const operatorSection = parseInstructions(ctx.operator_instructions)
+    ? `\n## REGRAS DO OPERADOR — Seguir obrigatoriamente\n${parseInstructions(ctx.operator_instructions)}\n`
     : '';
 
   return `You are a creative director and viral content strategist for CG 160, an AI-native content studio.

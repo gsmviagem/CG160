@@ -8,6 +8,21 @@
 
 import type { Idea, Character, PatternLibraryEntry, ScriptScene } from '@cg160/types';
 import { callGroq as callGemini } from './providers/groq';
+
+/** Parse instruction blocks stored as JSON array, or fall back to plain text. */
+function parseInstructions(raw: string | undefined): string {
+  if (!raw?.trim()) return '';
+  try {
+    const blocks = JSON.parse(raw) as Array<{ title?: string; content?: string }>;
+    if (Array.isArray(blocks)) {
+      return blocks
+        .filter(b => b.content?.trim())
+        .map(b => b.title?.trim() ? `### ${b.title}\n${b.content}` : b.content ?? '')
+        .join('\n\n');
+    }
+  } catch {}
+  return raw;
+}
 import type { ScoringWeights } from '@cg160/scoring';
 
 export interface ScriptGenerationContext {
@@ -74,8 +89,8 @@ Define their visual appearance, personality, and voice clearly.`;
     ? `\n## What has been performing best\n${ctx.performance_context}\n`
     : '';
 
-  const operatorSection = ctx.operator_instructions?.trim()
-    ? `\n## OPERATOR RULES — Must follow exactly\n${ctx.operator_instructions.trim()}\n`
+  const operatorSection = parseInstructions(ctx.operator_instructions)
+    ? `\n## OPERATOR RULES — Must follow exactly\n${parseInstructions(ctx.operator_instructions)}\n`
     : '';
 
   const targetDuration = target_duration_seconds ?? 30;
