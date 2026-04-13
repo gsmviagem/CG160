@@ -1,7 +1,8 @@
 // ============================================================
-// CG 160 — LLM Provider (re-exports Gemini as default)
-// Kept for backwards compatibility.
+// CG 160 — LLM Provider aliases
+// Default provider: Groq (free)
+// Gemini kept as fallback for future use
 // ============================================================
 
-export { callGemini as callClaude, callGeminiAnalytical as callClaudeAnalytical } from './gemini';
-export type { GeminiTextOptions as ClaudeTextOptions } from './gemini';
+export { callGroq as callClaude, callGroqAnalytical as callClaudeAnalytical } from './groq';
+export type { GroqTextOptions as ClaudeTextOptions } from './groq';

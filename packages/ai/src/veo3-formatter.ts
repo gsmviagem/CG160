@@ -5,7 +5,7 @@
 // package ready to paste directly into Veo 3.
 // ============================================================
 
-import { callGemini } from './providers/gemini';
+import { callGroq as callGemini } from './providers/groq';
 
 export interface Veo3Scene {
   scene_number: number;

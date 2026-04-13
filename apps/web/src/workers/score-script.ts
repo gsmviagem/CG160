@@ -5,7 +5,7 @@
 import { inngest } from '@/lib/inngest';
 import { getDB } from '@/lib/supabase';
 import { buildScoringPrompt, parseScoringResponse, buildScriptScore } from '@cg160/scoring';
-import { callGeminiAnalytical as callClaudeAnalytical } from '@cg160/ai';
+import { callGroqAnalytical as callClaudeAnalytical } from '@cg160/ai';
 
 const SCORE_THRESHOLD = parseFloat(process.env.SCRIPT_MIN_SCORE_THRESHOLD ?? '65');
 

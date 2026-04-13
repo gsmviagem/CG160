@@ -7,7 +7,7 @@
 // ============================================================
 
 import type { Idea, Character, PatternLibraryEntry, ScriptScene } from '@cg160/types';
-import { callGemini } from './providers/gemini';
+import { callGroq as callGemini } from './providers/groq';
 import type { ScoringWeights } from '@cg160/scoring';
 
 export interface ScriptGenerationContext {

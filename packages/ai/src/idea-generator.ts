@@ -18,7 +18,7 @@ import type {
   EmotionalTone,
   FormatType,
 } from '@cg160/types';
-import { callClaude } from './providers/anthropic';
+import { callGroq as callClaude } from './providers/groq';
 
 export interface IdeaGenerationContext {
   characters: Character[];
