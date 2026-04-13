@@ -87,6 +87,16 @@ export class DB {
     return data ?? [];
   }
 
+  async getIdeaById(id: string): Promise<Idea | null> {
+    const { data, error } = await this.client
+      .from('ideas')
+      .select('*, characters(*)')
+      .eq('id', id)
+      .single();
+    if (error) return null;
+    return data;
+  }
+
   async updateIdeaStatus(id: string, status: IdeaStatus, extras?: Partial<Idea>): Promise<void> {
     const { error } = await this.client
       .from('ideas')

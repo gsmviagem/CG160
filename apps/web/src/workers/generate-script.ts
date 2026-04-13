@@ -15,8 +15,7 @@ export const fnGenerateScript = inngest.createFunction(
 
     // Load idea + context
     const { idea, character, patterns, weights } = await step.run('load-context', async () => {
-      const ideas = await db.getIdeasByStatus('approved', 1);
-      const idea = ideas.find(i => i.id === idea_id) ?? await db.getIdeasByStatus('pending', 1).then(r => r[0]);
+      const idea = await db.getIdeaById(idea_id);
 
       if (!idea) throw new Error(`Idea ${idea_id} not found`);
 
