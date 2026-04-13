@@ -91,6 +91,8 @@ Your scripts are used to generate videos with **Veo 3** (Google's AI video model
 This means every visual and audio detail must be EXTREMELY specific and production-ready.
 The creator will paste your output directly into Veo 3 — there is no room for vagueness.
 
+FORMAT: Always vertical 9:16, HD 1080×1920. TikTok + Instagram Reels. Every visual direction must assume this format.
+
 ## Approved Idea
 Title: ${idea.title}
 Concept: ${idea.concept}

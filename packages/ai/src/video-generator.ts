@@ -230,8 +230,8 @@ export function buildVideoPrompt(
   character_visual_style?: string
 ): string {
   const platformContext = platform === 'tiktok'
-    ? 'Vertical 9:16 format. Bold, dynamic visuals that read clearly on mobile.'
-    : 'Vertical 9:16 format. Polished, vibrant aesthetic optimized for Instagram Reels.';
+    ? 'Vertical format 9:16 HD 1080x1920. Bold, dynamic visuals that read clearly on mobile. TikTok.'
+    : 'Vertical format 9:16 HD 1080x1920. Polished, vibrant aesthetic optimized for Instagram Reels.';
 
   const characterContext = character_visual_style
     ? `Character visual style: ${character_visual_style}.`

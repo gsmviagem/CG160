@@ -101,7 +101,7 @@ Voice style: ${script.voice_style ?? 'natural'}
 Pacing: ${script.pacing_style ?? 'medium'}
 Humor: ${script.humor_type ?? 'none'}
 Tone: ${script.emotional_tone ?? 'neutral'}
-Platform: ${platform} (vertical 9:16)
+Platform: ${platform} — vertical 9:16 HD 1080×1920 (TikTok + Instagram Reels)
 
 ${characterContext}
 
