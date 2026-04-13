@@ -52,5 +52,6 @@ export function getServiceClient() {
 }
 
 export function getDB(): DB {
-  return new DB(getServiceClient() as Parameters<typeof DB>[0]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return new DB(getServiceClient() as any);
 }
