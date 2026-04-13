@@ -63,8 +63,9 @@ Define their visual appearance, personality, and voice clearly.`;
     .map(([key]) => `- ${key.replace(/_/g, ' ')}`)
     .join('\n');
 
+  const sourcePatterns: string[] = Array.isArray(idea.source_patterns) ? idea.source_patterns : [];
   const relevantPatterns = patterns
-    .filter(p => idea.source_patterns.includes(p.id))
+    .filter(p => sourcePatterns.includes(p.id))
     .map(p => `- [${p.pattern_type}] ${p.name}: ${p.description}`)
     .join('\n') || '- Apply highest-performing patterns';
 
