@@ -13,6 +13,10 @@ import { fnPollVideoJob } from '@/workers/poll-video-job';
 import { fnSyncMetrics } from '@/workers/sync-metrics';
 import { fnRunLearningLoop } from '@/workers/learning-loop';
 
+// Allow Inngest steps to run for up to 60s (Vercel default is 10s, which
+// kills long AI calls like Groq script generation with 8192 output tokens).
+export const maxDuration = 60;
+
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
