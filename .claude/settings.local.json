@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; Write-Host 'OK'\")",
+      "Bash(powershell -Command \"Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression; scoop --version\")",
+      "Bash(powershell -Command \"scoop bucket add supabase https://github.com/supabase/scoop-bucket.git 2>&1; scoop install supabase 2>&1\")",
+      "Bash(powershell -Command ':*)",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri 'https://github.com/supabase/cli/releases/latest/download/supabase_windows_amd64.tar.gz' -OutFile 'C:\\\\Users\\\\Gabriel\\\\Downloads\\\\supabase.tar.gz'; Write-Host 'OK'\")",
+      "Bash(C:\\\\Users\\\\Gabriel\\\\bin\\\\supabase.exe link:*)",
+      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; C:\\\\Users\\\\Gabriel\\\\bin\\\\supabase.exe link --project-ref rowpwfimtiybwsmbxqwq 2>&1\")",
+      "Bash(powershell -Command \"Get-Content 'D:\\\\Shalom\\\\CG 160\\\\supabase\\\\migrations\\\\001_init.sql' | Measure-Object -Line\")",
+      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add vercel.json 'apps/web/src/app/api/cron/daily/route.ts'; git commit -m 'fix: consolidate crons into single daily job for Vercel free plan'; git push\")",
+      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add apps/web/package.json turbo.json; git commit -m 'fix: add autoprefixer, upgrade next.js, declare turbo env vars'; git push\")",
+      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add apps/web/src/lib/supabase.ts; git commit -m 'fix: type annotation on supabase cookie setAll'; git push\")",
+      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add apps/web/src/lib/supabase.ts; git commit -m 'fix: simplify DB cast in getDB'; git push\")",
+      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add vercel.json; git commit -m 'fix: set outputDirectory for Vercel monorepo build'; git push\")",
+      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add apps/web/src/workers/poll-video-job.ts; git commit -m 'fix: reduce poll-video-job concurrency to 3 for free plan'; git push\")",
+      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add -A; git commit -m 'feat: replace Anthropic with Google Gemini \\(free tier\\)'; git push\")"
+    ]
+  }
+}

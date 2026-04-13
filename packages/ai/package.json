@@ -10,7 +10,7 @@
   "dependencies": {
     "@cg160/types": "*",
     "@cg160/scoring": "*",
-    "@anthropic-ai/sdk": "^0.32.1"
+    "@google/generative-ai": "^0.21.0"
   },
   "devDependencies": {
     "typescript": "*",
