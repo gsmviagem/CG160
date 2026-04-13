@@ -80,7 +80,12 @@ export const fnGenerateScript = inngest.createFunction(
         rejected_at: null,
         approved_at: null,
         generation_model: 'claude-sonnet-4-6',
-        metadata: { video_prompt: rawScript.video_prompt },
+        metadata: {
+          video_prompt: rawScript.video_prompt,
+          character_visual_bible: rawScript.character_visual_bible,
+          audio_direction: rawScript.audio_direction,
+          production_notes: rawScript.production_notes,
+        },
       });
 
       // Update idea status

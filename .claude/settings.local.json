@@ -16,7 +16,8 @@
       "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add vercel.json; git commit -m 'fix: set outputDirectory for Vercel monorepo build'; git push\")",
       "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add apps/web/src/workers/poll-video-job.ts; git commit -m 'fix: reduce poll-video-job concurrency to 3 for free plan'; git push\")",
       "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add -A; git commit -m 'feat: replace Anthropic with Google Gemini \\(free tier\\)'; git push\")",
-      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add -A; git commit -m 'fix: update all LLM calls to use Gemini options format'; git push\")"
+      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add -A; git commit -m 'fix: update all LLM calls to use Gemini options format'; git push\")",
+      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add -A; git commit -m 'feat: detailed Veo 3 script format with character bible, audio direction, production notes'; git push\")"
     ]
   }
 }
