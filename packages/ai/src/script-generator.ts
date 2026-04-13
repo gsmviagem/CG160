@@ -133,8 +133,8 @@ export async function generateScript(
   const prompt = buildScriptGenerationPrompt(ctx);
 
   const response = await callClaude(prompt, {
-    model: 'claude-sonnet-4-6',
-    max_tokens: 6000,
+    model: 'gemini-2.0-flash',
+    maxOutputTokens: 6000,
     temperature: 0.85,
   });
 
@@ -176,8 +176,8 @@ ${ctx.previous_script}
 Address the rejection reason directly. Be meaningfully different and better.`;
 
   const response = await callClaude(basePrompt + regenerationSuffix, {
-    model: 'claude-sonnet-4-6',
-    max_tokens: 6000,
+    model: 'gemini-2.0-flash',
+    maxOutputTokens: 6000,
     temperature: 0.95,
   });
 

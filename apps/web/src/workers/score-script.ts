@@ -35,8 +35,8 @@ export const fnScoreScript = inngest.createFunction(
       });
 
       const response = await callClaudeAnalytical(prompt, {
-        model: 'claude-sonnet-4-6',
-        max_tokens: 3000,
+        model: 'gemini-2.0-flash',
+        maxOutputTokens: 3000,
       });
 
       const rawScores = parseScoringResponse(response);
