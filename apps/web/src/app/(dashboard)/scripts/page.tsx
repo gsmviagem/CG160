@@ -16,7 +16,8 @@ async function getScripts() {
 function buildScenePrompt(
   scene: ScriptScene,
   characterProfile: string,
-  audioDirection: string
+  audioDirection: string,
+  productionNotes: string
 ): string {
   const parts: string[] = [];
   if (characterProfile) parts.push(`CHARACTER PROFILE:\n${characterProfile}`);
@@ -25,6 +26,17 @@ function buildScenePrompt(
   if (scene.visual_direction) parts.push(`Visual: ${scene.visual_direction}`);
   if (scene.sound_notes)      parts.push(`Audio: ${scene.sound_notes}`);
   else if (audioDirection)    parts.push(`Audio: ${audioDirection}`);
+  if (productionNotes)        parts.push(`Production notes: ${productionNotes}`);
+  return parts.join('\n\n');
+}
+
+function buildImagePrompt(
+  scene: ScriptScene,
+  characterProfile: string,
+): string {
+  const parts: string[] = [];
+  if (characterProfile) parts.push(`CHARACTER: ${characterProfile}`);
+  if (scene.image_prompt) parts.push(scene.image_prompt);
   return parts.join('\n\n');
 }
 
@@ -44,14 +56,16 @@ function ScoreBar({ label, value }: { label: string; value: number | null }) {
 }
 
 function ScenePromptBlock({
-  scene, characterProfile, audioDirection, imageFilename,
+  scene, characterProfile, audioDirection, productionNotes, imageFilename,
 }: {
   scene: ScriptScene;
   characterProfile: string;
   audioDirection: string;
+  productionNotes: string;
   imageFilename: string;
 }) {
-  const veoPrompt = buildScenePrompt(scene, characterProfile, audioDirection);
+  const veoPrompt   = buildScenePrompt(scene, characterProfile, audioDirection, productionNotes);
+  const imagePrompt = buildImagePrompt(scene, characterProfile);
   return (
     <div className="border border-gray-700 rounded-lg overflow-hidden">
       {/* Header */}
@@ -74,10 +88,10 @@ function ScenePromptBlock({
         <div className="border-t border-gray-700">
           <div className="flex items-center justify-between px-3 py-2 bg-purple-950/40">
             <span className="text-xs font-semibold text-purple-300">📸 Prompt Gemini — imagem estática</span>
-            <CopyButton text={scene.image_prompt} />
+            <CopyButton text={imagePrompt} />
           </div>
           <pre className="px-3 py-2 text-xs text-purple-200 whitespace-pre-wrap leading-relaxed bg-purple-950/20 font-mono">
-            {scene.image_prompt}
+            {imagePrompt}
           </pre>
         </div>
       )}
@@ -161,6 +175,7 @@ function ScriptCard({ script }: { script: Script }) {
   const metadata = script.metadata as Record<string, string>;
   const characterProfile = metadata?.character_visual_bible ?? '';
   const audioDirection   = metadata?.audio_direction ?? '';
+  const productionNotes  = metadata?.production_notes ?? '';
   const scenes = Array.isArray(script.scenes) ? script.scenes : [];
 
   return (
@@ -252,6 +267,7 @@ function ScriptCard({ script }: { script: Script }) {
                 scene={scene}
                 characterProfile={characterProfile}
                 audioDirection={audioDirection}
+                productionNotes={productionNotes}
                 imageFilename={`${script.id.replace(/-/g, '').slice(0, 8)}_cena${scene.scene_number}.jpg`}
               />
             ))}

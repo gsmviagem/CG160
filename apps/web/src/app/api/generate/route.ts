@@ -22,10 +22,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  const { type, idea_id, count } = body;
+  const { type, idea_id, count, theme } = body;
 
   if (type === 'ideas') {
-    const result = await sendInngestEvent('cg160/ideas.generate', { count: Number(count ?? 5) });
+    const payload: Record<string, unknown> = { count: Number(count ?? 5) };
+    if (theme) payload.theme = theme;
+    const result = await sendInngestEvent('cg160/ideas.generate', payload);
     if (!result.ok) {
       // Surface the real error to the client so user/developer can diagnose
       return NextResponse.json({

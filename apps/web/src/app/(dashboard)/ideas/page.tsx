@@ -1,6 +1,6 @@
 import { getDB } from '@/lib/supabase';
 import { formatScore, scoreColor, statusBadgeColor, relativeTime } from '@/lib/utils';
-import { ApprovalButton, GenerateButton, DeleteButton } from '@/components/ActionButton';
+import { ApprovalButton, GenerateButton, GenerateIdeasBox, DeleteButton } from '@/components/ActionButton';
 import { GeneratingBanner } from '@/components/GeneratingBanner';
 import type { Idea } from '@cg160/types';
 
@@ -109,8 +109,11 @@ export default async function IdeasPage() {
               <div className="text-gray-600 text-xs">Com Script</div>
             </div>
           </div>
-          <GenerateButton type="ideas" count={5} label="+ Gerar Ideias" variant="primary" currentCount={ideas.length} />
         </div>
+      </div>
+
+      <div className="mb-6">
+        <GenerateIdeasBox currentCount={ideas.length} />
       </div>
 
       <GeneratingBanner itemCount={activeCount} />

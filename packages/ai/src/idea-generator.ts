@@ -26,6 +26,7 @@ export interface IdeaGenerationContext {
   patterns: PatternLibraryEntry[];
   recent_ideas: Array<{ title: string; concept: string }>;
   performance_context?: string; // summary of what's been working
+  theme?: string; // optional topic/theme requested by operator
   count: number;
 }
 
@@ -69,6 +70,10 @@ function buildIdeaGenerationPrompt(ctx: IdeaGenerationContext): string {
     ? `\n## What has been working\n${ctx.performance_context}\n`
     : '';
 
+  const themeSection = ctx.theme
+    ? `\n## TEMA OBRIGATÓRIO — Foco desta geração\n${ctx.theme}\nTodas as ideias DEVEM explorar este tema de formas criativas e diversas.\n`
+    : '';
+
   return `You are a creative director and viral content strategist for CG 160, an AI-native content studio.
 
 IMPORTANT: Write ALL output in Brazilian Portuguese (pt-BR). Titles, concepts, hooks, rationales — everything in pt-BR.
@@ -83,7 +88,7 @@ ${trendList}
 
 ## High-Weight Content Patterns (prioritize these)
 ${topPatterns}
-${performanceContext}
+${themeSection}${performanceContext}
 ## Recent Ideas (AVOID similar concepts — be novel)
 ${recentIdeas}
 
@@ -192,7 +197,7 @@ export async function generateIdeas(
   const prompt = buildIdeaGenerationPrompt(ctx);
   const response = await callClaude(prompt, {
     model: 'llama-3.3-70b-versatile',
-    maxOutputTokens: 8192,
+    maxOutputTokens: 4000,
     temperature: 0.9,
   });
 

@@ -163,6 +163,79 @@ export function GenerateButton({
   );
 }
 
+// ─── Generate Ideas Box ────────────────────────────────────────────────────────
+// Input de tema + botão de geração de ideias
+
+export function GenerateIdeasBox({ currentCount = 0 }: { currentCount?: number }) {
+  const router = useRouter();
+  const [theme, setTheme] = useState('');
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setState('loading');
+    setErrorMsg('');
+    try {
+      const body: Record<string, unknown> = { type: 'ideas', count: 5 };
+      if (theme.trim()) body.theme = theme.trim();
+
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(data.detail ?? data.error ?? res.statusText);
+      }
+      setGenerating('ideas', currentCount);
+      setState('done');
+      setTheme('');
+      setTimeout(() => { setState('idle'); router.refresh(); }, 1500);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setErrorMsg(msg);
+      setState('error');
+      setTimeout(() => { setState('idle'); setErrorMsg(''); }, 6000);
+    }
+  }
+
+  const isLoading = state === 'loading';
+  const isDone    = state === 'done';
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full max-w-lg">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={theme}
+          onChange={e => setTheme(e.target.value)}
+          placeholder="Tema (opcional) — ex: frutinhas com corpo humano"
+          disabled={isLoading || isDone}
+          className="flex-1 text-sm px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+        />
+        <button
+          type="submit"
+          disabled={isLoading || isDone}
+          className={`text-sm px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+            isDone
+              ? 'bg-green-700 text-green-100'
+              : state === 'error'
+              ? 'bg-red-800 text-red-100'
+              : 'bg-indigo-700 hover:bg-indigo-600 text-white disabled:bg-indigo-900 disabled:text-indigo-700'
+          }`}
+        >
+          {isLoading ? 'Gerando...' : isDone ? '✓ Enviado!' : '+ Gerar 5 ideias'}
+        </button>
+      </div>
+      {state === 'error' && errorMsg && (
+        <span className="text-xs text-red-400">{errorMsg}</span>
+      )}
+    </form>
+  );
+}
+
 // ─── Delete Button ─────────────────────────────────────────────────────────────
 
 export function DeleteButton({ type, id }: { type: 'idea' | 'script'; id: string }) {

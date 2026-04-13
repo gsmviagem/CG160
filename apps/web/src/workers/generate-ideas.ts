@@ -13,6 +13,7 @@ export const fnGenerateIdeas = inngest.createFunction(
   async ({ event, step }) => {
     const db = getDB();
     const count = event.data.count ?? 10;
+    const theme = (event.data.theme as string | undefined) ?? undefined;
 
     // Gather context
     const [characters, patterns, recentIdeas] = await step.run('gather-context', async () => {
@@ -31,6 +32,7 @@ export const fnGenerateIdeas = inngest.createFunction(
         recent_ideas: recentIdeas,
         trends: [], // TODO: integrate trend fetching
         count,
+        theme,
       });
     });
 
