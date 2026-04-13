@@ -337,6 +337,39 @@ export class DB {
   }
 
   // --- Dashboard Stats ---
+  // --- Delete ---
+  async deleteIdea(id: string): Promise<void> {
+    const { error } = await this.client.from('ideas').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  async deleteScript(id: string): Promise<void> {
+    const { error } = await this.client.from('scripts').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  // --- Get all scripts (any status) ---
+  async getAllScripts(limit = 50): Promise<Script[]> {
+    const { data, error } = await this.client
+      .from('scripts')
+      .select('*, ideas(*)')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  // --- Get all ideas (any status) ---
+  async getAllIdeas(limit = 80): Promise<Idea[]> {
+    const { data, error } = await this.client
+      .from('ideas')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data ?? [];
+  }
+
   async getDashboardStats() {
     const [ideas, scripts, videos_approval, videos_7d] = await Promise.all([
       this.client.from('ideas').select('id', { count: 'exact', head: true }).eq('status', 'pending'),

@@ -156,3 +156,49 @@ export function GenerateButton({
     </div>
   );
 }
+
+// ─── Delete Button ─────────────────────────────────────────────────────────────
+
+export function DeleteButton({ type, id }: { type: 'idea' | 'script'; id: string }) {
+  const router = useRouter();
+  const [state, setState] = useState<'idle' | 'confirm' | 'loading' | 'done'>('idle');
+
+  if (state === 'confirm') {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <span className="text-xs text-gray-400">Confirmar?</span>
+        <button
+          onClick={async () => {
+            setState('loading');
+            await fetch('/api/delete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ type, id }),
+            });
+            setState('done');
+            router.refresh();
+          }}
+          className="text-xs px-2 py-1 bg-red-700 hover:bg-red-600 text-white rounded transition-colors"
+        >
+          Sim
+        </button>
+        <button
+          onClick={() => setState('idle')}
+          className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
+        >
+          Não
+        </button>
+      </span>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setState('confirm')}
+      disabled={state === 'loading' || state === 'done'}
+      className="text-xs px-2 py-1 bg-gray-800 hover:bg-red-900 text-gray-500 hover:text-red-300 rounded transition-colors"
+    >
+      {state === 'loading' ? '...' : state === 'done' ? '✓' : 'Deletar'}
+    </button>
+  );
+}

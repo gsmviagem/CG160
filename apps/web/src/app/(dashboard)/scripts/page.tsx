@@ -2,65 +2,28 @@ import { getDB } from '@/lib/supabase';
 import { scoreColor, statusBadgeColor, relativeTime } from '@/lib/utils';
 import { GeneratingBanner } from '@/components/GeneratingBanner';
 import { CopyButton } from '@/components/CopyButton';
-import type { Script } from '@cg160/types';
+import { DeleteButton } from '@/components/ActionButton';
+import type { Script, ScriptScene } from '@cg160/types';
 
 export const revalidate = 0;
 
 async function getScripts() {
   const db = getDB();
-  const { getServiceClient } = await import('@/lib/supabase');
-  const client = getServiceClient();
-
-  // Fetch all scripts regardless of status to avoid missing any
-  const { data: all } = await client
-    .from('scripts')
-    .select('*, ideas(*)')
-    .not('status', 'eq', 'rejected')
-    .order('created_at', { ascending: false })
-    .limit(50);
-
-  const scripts = (all ?? []) as Script[];
-
-  const pending    = scripts.filter(s => s.status === 'pending');
-  const approved   = scripts.filter(s => s.status === 'approved');
-  const videoReady = scripts.filter(s => s.status === 'video_ready');
-
-  return { pending, approved, videoReady, total: scripts.length };
+  return db.getAllScripts(60);
 }
 
-// Build a complete, ready-to-paste Veo 3 prompt for a single scene
 function buildScenePrompt(
-  scene: Script['scenes'][number],
+  scene: ScriptScene,
   characterProfile: string,
   audioDirection: string
 ): string {
   const parts: string[] = [];
-
-  // Character block (English — for Veo 3)
-  if (characterProfile) {
-    parts.push(`CHARACTER PROFILE:\n${characterProfile}`);
-  }
-
-  // Scene header
+  if (characterProfile) parts.push(`CHARACTER PROFILE:\n${characterProfile}`);
   parts.push(`SCENE ${scene.scene_number} — ${scene.duration_estimate_seconds}s`);
-
-  // Dialogue (can be PT-BR — Veo 3 handles it)
-  if (scene.dialogue) {
-    parts.push(`Dialogue: "${scene.dialogue}"`);
-  }
-
-  // Visual direction (English)
-  if (scene.visual_direction) {
-    parts.push(`Visual: ${scene.visual_direction}`);
-  }
-
-  // Audio (English)
-  if (scene.sound_notes) {
-    parts.push(`Audio: ${scene.sound_notes}`);
-  } else if (audioDirection) {
-    parts.push(`Audio: ${audioDirection}`);
-  }
-
+  if (scene.dialogue)        parts.push(`Dialogue: "${scene.dialogue}"`);
+  if (scene.visual_direction) parts.push(`Visual: ${scene.visual_direction}`);
+  if (scene.sound_notes)     parts.push(`Audio: ${scene.sound_notes}`);
+  else if (audioDirection)   parts.push(`Audio: ${audioDirection}`);
   return parts.join('\n\n');
 }
 
@@ -79,20 +42,14 @@ function ScoreBar({ label, value }: { label: string; value: number | null }) {
   );
 }
 
-function ScenePromptBlock({
-  scene,
-  characterProfile,
-  audioDirection,
-}: {
-  scene: Script['scenes'][number];
+function ScenePromptBlock({ scene, characterProfile, audioDirection }: {
+  scene: ScriptScene;
   characterProfile: string;
   audioDirection: string;
 }) {
   const prompt = buildScenePrompt(scene, characterProfile, audioDirection);
-
   return (
     <div className="border border-gray-700 rounded-lg overflow-hidden">
-      {/* Scene header */}
       <div className="flex items-center justify-between px-3 py-2 bg-gray-800">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-white">Cena {scene.scene_number}</span>
@@ -103,8 +60,6 @@ function ScenePromptBlock({
         </div>
         <CopyButton text={prompt} />
       </div>
-
-      {/* Prompt content */}
       <pre className="px-3 py-3 text-xs text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-900/60 font-mono">
         {prompt}
       </pre>
@@ -114,31 +69,35 @@ function ScenePromptBlock({
 
 function ScriptCard({ script }: { script: Script }) {
   const metadata = script.metadata as Record<string, string>;
-  const characterProfile: string = metadata?.character_visual_bible ?? '';
-  const audioDirection: string = metadata?.audio_direction ?? '';
+  const characterProfile = metadata?.character_visual_bible ?? '';
+  const audioDirection   = metadata?.audio_direction ?? '';
   const scenes = Array.isArray(script.scenes) ? script.scenes : [];
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-gray-800 flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className={`text-xs px-2 py-0.5 rounded font-medium ${statusBadgeColor(script.status)}`}>
               {script.status}
             </span>
-            {script.version > 1 && (
-              <span className="text-xs text-gray-600">v{script.version}</span>
-            )}
+            {script.version > 1 && <span className="text-xs text-gray-600">v{script.version}</span>}
+            <span className="text-xs text-gray-600">{relativeTime(script.created_at)}</span>
           </div>
           <h3 className="font-semibold text-white">{script.title}</h3>
-          <p className="text-xs text-gray-500 mt-0.5">{relativeTime(script.created_at)}</p>
+          {script.rejection_reason && (
+            <p className="text-xs text-red-400 mt-1">Rejeitado: {script.rejection_reason}</p>
+          )}
         </div>
-        <div className="text-right flex-shrink-0">
-          <div className={`text-2xl font-bold ${scoreColor(script.total_score)}`}>
-            {script.total_score?.toFixed(1) ?? '—'}
+        <div className="flex items-start gap-3 flex-shrink-0">
+          <div className="text-right">
+            <div className={`text-2xl font-bold ${scoreColor(script.total_score)}`}>
+              {script.total_score?.toFixed(1) ?? '—'}
+            </div>
+            <div className="text-xs text-gray-600">score</div>
           </div>
-          <div className="text-xs text-gray-600">score</div>
+          <DeleteButton type="script" id={script.id} />
         </div>
       </div>
 
@@ -154,7 +113,7 @@ function ScriptCard({ script }: { script: Script }) {
         <p className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">{script.content}</p>
       </div>
 
-      {/* ── PROMPTS VEO 3 — one per scene, ready to paste ── */}
+      {/* Prompts Veo 3 */}
       {scenes.length > 0 && (
         <div className="px-4 py-4 border-b border-gray-800">
           <div className="flex items-center justify-between mb-3">
@@ -164,7 +123,7 @@ function ScriptCard({ script }: { script: Script }) {
             <span className="text-xs text-gray-600">1 prompt por cena</span>
           </div>
           <div className="space-y-3">
-            {scenes.map((scene) => (
+            {scenes.map(scene => (
               <ScenePromptBlock
                 key={scene.scene_number}
                 scene={scene}
@@ -174,7 +133,7 @@ function ScriptCard({ script }: { script: Script }) {
             ))}
           </div>
           <p className="text-xs text-gray-600 mt-3">
-            Cole cada prompt diretamente no Veo 3. O perfil do personagem está incluído em cada um para manter consistência visual.
+            O perfil do personagem está incluído em cada prompt para consistência visual no Veo 3.
           </p>
         </div>
       )}
@@ -208,20 +167,20 @@ function ScriptCard({ script }: { script: Script }) {
         <div className="px-4 py-3 border-b border-gray-800">
           <div className="text-xs text-gray-500 font-medium mb-3">PONTUAÇÃO — 14 DIMENSÕES</div>
           <div className="space-y-1.5">
-            <ScoreBar label="Hook strength"    value={script.hook_strength} />
-            <ScoreBar label="Clarity"          value={script.clarity_score} />
+            <ScoreBar label="Hook strength"     value={script.hook_strength} />
+            <ScoreBar label="Clarity"           value={script.clarity_score} />
             <ScoreBar label="Emotional trigger" value={script.emotional_trigger_score} />
-            <ScoreBar label="Curiosity gap"    value={script.curiosity_gap_score} />
-            <ScoreBar label="Pacing density"   value={script.pacing_density_score} />
-            <ScoreBar label="Setup simplicity" value={script.setup_simplicity_score} />
-            <ScoreBar label="Punchline"        value={script.punchline_strength} />
-            <ScoreBar label="Loop potential"   value={script.loop_potential} />
-            <ScoreBar label="Shareability"     value={script.shareability_score} />
-            <ScoreBar label="Memorability"     value={script.memorability_score} />
-            <ScoreBar label="Novelty"          value={script.novelty_score} />
+            <ScoreBar label="Curiosity gap"     value={script.curiosity_gap_score} />
+            <ScoreBar label="Pacing density"    value={script.pacing_density_score} />
+            <ScoreBar label="Setup simplicity"  value={script.setup_simplicity_score} />
+            <ScoreBar label="Punchline"         value={script.punchline_strength} />
+            <ScoreBar label="Loop potential"    value={script.loop_potential} />
+            <ScoreBar label="Shareability"      value={script.shareability_score} />
+            <ScoreBar label="Memorability"      value={script.memorability_score} />
+            <ScoreBar label="Novelty"           value={script.novelty_score} />
             <ScoreBar label="Absurdity balance" value={script.absurdity_balance} />
             <ScoreBar label="Visual feasibility" value={script.visual_feasibility} />
-            <ScoreBar label="Viral alignment"  value={script.viral_structure_alignment} />
+            <ScoreBar label="Viral alignment"   value={script.viral_structure_alignment} />
           </div>
         </div>
       )}
@@ -246,20 +205,26 @@ function ScriptCard({ script }: { script: Script }) {
 }
 
 export default async function ScriptsPage() {
-  const { pending, approved, videoReady, total } = await getScripts();
+  const scripts = await getScripts();
+  const byStatus = {
+    pending:     scripts.filter(s => s.status === 'pending'),
+    approved:    scripts.filter(s => s.status === 'approved'),
+    rejected:    scripts.filter(s => s.status === 'rejected'),
+    other:       scripts.filter(s => !['pending','approved','rejected'].includes(s.status)),
+  };
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Scripts</h1>
         <p className="text-gray-500 mt-1 text-sm">
-          {total} script{total !== 1 ? 's' : ''} — prompts Veo 3 prontos por cena
+          {scripts.length} script{scripts.length !== 1 ? 's' : ''} no total — prompts Veo 3 prontos por cena
         </p>
       </div>
 
-      <GeneratingBanner itemCount={total} />
+      <GeneratingBanner itemCount={scripts.length} />
 
-      {total === 0 && (
+      {scripts.length === 0 && (
         <div className="text-center py-20 text-gray-600">
           <div className="text-4xl mb-3">📝</div>
           <div className="text-lg">Nenhum script ainda</div>
@@ -267,35 +232,46 @@ export default async function ScriptsPage() {
         </div>
       )}
 
-      {pending.length > 0 && (
+      {byStatus.pending.length > 0 && (
         <section className="mb-8">
           <h2 className="text-sm font-semibold text-yellow-400 uppercase tracking-wider mb-3">
-            Aguardando aprovação ({pending.length})
+            Aguardando aprovação ({byStatus.pending.length})
           </h2>
           <div className="space-y-4">
-            {pending.map(s => <ScriptCard key={s.id} script={s} />)}
+            {byStatus.pending.map(s => <ScriptCard key={s.id} script={s} />)}
           </div>
         </section>
       )}
 
-      {approved.length > 0 && (
+      {byStatus.approved.length > 0 && (
         <section className="mb-8">
           <h2 className="text-sm font-semibold text-green-400 uppercase tracking-wider mb-3">
-            Aprovados ({approved.length})
+            Aprovados ({byStatus.approved.length})
           </h2>
           <div className="space-y-4">
-            {approved.map(s => <ScriptCard key={s.id} script={s} />)}
+            {byStatus.approved.map(s => <ScriptCard key={s.id} script={s} />)}
           </div>
         </section>
       )}
 
-      {videoReady.length > 0 && (
+      {byStatus.other.length > 0 && (
         <section className="mb-8">
           <h2 className="text-sm font-semibold text-purple-400 uppercase tracking-wider mb-3">
-            Vídeo Pronto ({videoReady.length})
+            Outros ({byStatus.other.length})
           </h2>
           <div className="space-y-4">
-            {videoReady.map(s => <ScriptCard key={s.id} script={s} />)}
+            {byStatus.other.map(s => <ScriptCard key={s.id} script={s} />)}
+          </div>
+        </section>
+      )}
+
+      {byStatus.rejected.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-red-400 uppercase tracking-wider mb-3">
+            Rejeitados ({byStatus.rejected.length})
+          </h2>
+          <div className="space-y-4 opacity-60">
+            {byStatus.rejected.map(s => <ScriptCard key={s.id} script={s} />)}
           </div>
         </section>
       )}
