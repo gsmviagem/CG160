@@ -21,6 +21,12 @@ export async function POST(request: NextRequest) {
   if (!key) return NextResponse.json({ error: 'key required' }, { status: 400 });
 
   const db = getDB();
-  await db.setSetting(key, value ?? '');
-  return NextResponse.json({ ok: true });
+  try {
+    await db.setSetting(key, value ?? '');
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('[settings] setSetting error:', msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }

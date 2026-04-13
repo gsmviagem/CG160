@@ -21,20 +21,26 @@ export function InstructionsEditor({
     ? { border: 'border-yellow-900/50', header: 'bg-yellow-950/30', tag: 'text-yellow-400', btn: 'bg-yellow-700 hover:bg-yellow-600' }
     : { border: 'border-green-900/50', header: 'bg-green-950/30', tag: 'text-green-400', btn: 'bg-green-700 hover:bg-green-600' };
 
+  const [errorMsg, setErrorMsg] = useState('');
+
   async function save() {
     setState('saving');
+    setErrorMsg('');
     try {
       const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: settingKey, value }),
       });
-      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json() as { ok?: boolean; error?: string };
+      if (!res.ok || data.error) throw new Error(data.error ?? res.statusText);
       setState('saved');
       setTimeout(() => setState('idle'), 2000);
-    } catch {
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setErrorMsg(msg);
       setState('error');
-      setTimeout(() => setState('idle'), 3000);
+      setTimeout(() => { setState('idle'); setErrorMsg(''); }, 6000);
     }
   }
 
@@ -52,6 +58,9 @@ export function InstructionsEditor({
           rows={6}
           className="w-full text-sm bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500 resize-y font-mono leading-relaxed"
         />
+        {state === 'error' && errorMsg && (
+          <p className="text-xs text-red-400 mb-2 break-words">{errorMsg}</p>
+        )}
         <div className="flex items-center justify-between mt-3">
           <span className="text-xs text-gray-600">
             {value.length > 0 ? `${value.length} caracteres` : 'Vazio — nenhuma instrução extra será usada'}
@@ -66,7 +75,7 @@ export function InstructionsEditor({
               `${accent.btn} text-white`
             }`}
           >
-            {state === 'saving' ? 'Salvando...' : state === 'saved' ? '✓ Salvo' : state === 'error' ? '✗ Erro' : 'Salvar'}
+            {state === 'saving' ? 'Salvando...' : state === 'saved' ? '✓ Salvo' : state === 'error' ? '✗ Falhou' : 'Salvar'}
           </button>
         </div>
       </div>

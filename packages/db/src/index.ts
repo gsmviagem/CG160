@@ -397,9 +397,10 @@ export class DB {
   }
 
   async setSetting(key: string, value: string): Promise<void> {
-    await this.client
+    const { error } = await this.client
       .from('operator_settings')
       .upsert({ key, value, updated_at: new Date().toISOString() });
+    if (error) throw new Error(`setSetting failed: ${error.message}`);
   }
 
   async getTodayStats(): Promise<{ ideas_today: number; scripts_today: number }> {
