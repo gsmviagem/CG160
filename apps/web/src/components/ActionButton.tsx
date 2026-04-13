@@ -113,7 +113,13 @@ export function GenerateButton({
       // Activate the GeneratingBanner so user can see progress
       setGenerating(type, currentCount);
       setState('done');
-      setTimeout(() => setState('idle'), 1200);
+      // For script generation, redirect to scripts page so the banner
+      // monitors the correct count and the new script is visible on arrival
+      if (type === 'script') {
+        setTimeout(() => router.push('/scripts'), 1200);
+      } else {
+        setTimeout(() => setState('idle'), 1200);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error('GenerateButton error:', msg);
