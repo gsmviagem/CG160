@@ -9,6 +9,10 @@ import { getDB } from '@/lib/supabase';
 
 async function safeSend(name: string, data: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> {
   try {
+    // Force-set event key at runtime in case module was initialized before env vars loaded
+    const key = process.env.INNGEST_EVENT_KEY;
+    if (key) inngest.setEventKey(key);
+
     await inngest.send({ name, data } as Parameters<typeof inngest.send>[0]);
     return { ok: true };
   } catch (err: unknown) {

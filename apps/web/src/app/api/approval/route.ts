@@ -10,6 +10,8 @@ import { inngest } from '@/lib/inngest';
 // Safe inngest.send — never throws. Logs failures but lets the UI proceed.
 async function sendEvent(name: string, data: Record<string, unknown>) {
   try {
+    const key = process.env.INNGEST_EVENT_KEY;
+    if (key) inngest.setEventKey(key);
     await inngest.send({ name, data } as Parameters<typeof inngest.send>[0]);
   } catch (err) {
     console.error(`[approval] inngest.send(${name}) failed:`, err);
