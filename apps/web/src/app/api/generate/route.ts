@@ -7,55 +7,67 @@ import { NextRequest, NextResponse } from 'next/server';
 import { inngest } from '@/lib/inngest';
 import { getDB } from '@/lib/supabase';
 
+async function safeSend(name: string, data: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await inngest.send({ name, data } as Parameters<typeof inngest.send>[0]);
+    return { ok: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[generate] inngest.send(${name}) failed: ${msg}`, err);
+    return { ok: false, error: msg };
+  }
+}
+
 export async function POST(request: NextRequest) {
   const contentType = request.headers.get('content-type') ?? '';
 
   let body: Record<string, string>;
-  if (contentType.includes('application/json')) {
-    body = await request.json() as Record<string, string>;
-  } else {
-    const fd = await request.formData();
-    body = Object.fromEntries([...fd.entries()].map(([k, v]) => [k, String(v)]));
+  try {
+    if (contentType.includes('application/json')) {
+      body = await request.json() as Record<string, string>;
+    } else {
+      const fd = await request.formData();
+      body = Object.fromEntries([...fd.entries()].map(([k, v]) => [k, String(v)]));
+    }
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
   const { type, idea_id, count } = body;
 
-  try {
-    if (type === 'ideas') {
-      await inngest.send({
-        name: 'cg160/ideas.generate',
-        data: { count: Number(count ?? 5) },
-      });
-      if (!contentType.includes('application/json')) {
-        return NextResponse.redirect(new URL('/ideas', request.url));
-      }
-      return NextResponse.json({ success: true, message: 'Idea generation started' });
+  if (type === 'ideas') {
+    const result = await safeSend('cg160/ideas.generate', { count: Number(count ?? 5) });
+    if (!result.ok) {
+      // Surface the real error to the client so user/developer can diagnose
+      return NextResponse.json({
+        error: 'Inngest send failed',
+        detail: result.error,
+        hint: 'Check INNGEST_EVENT_KEY in Vercel environment variables',
+      }, { status: 500 });
     }
+    return NextResponse.json({ success: true, message: 'Idea generation started' });
+  }
 
-    if (type === 'script') {
-      if (!idea_id) {
-        return NextResponse.json({ error: 'idea_id required' }, { status: 400 });
-      }
-      // Make sure idea is in approved state
+  if (type === 'script') {
+    if (!idea_id) {
+      return NextResponse.json({ error: 'idea_id required' }, { status: 400 });
+    }
+    try {
       const db = getDB();
       await db.updateIdeaStatus(idea_id, 'approved');
-      await inngest.send({
-        name: 'cg160/scripts.generate',
-        data: { idea_id },
-      });
-      if (!contentType.includes('application/json')) {
-        return NextResponse.redirect(new URL('/ideas', request.url));
-      }
-      return NextResponse.json({ success: true, message: 'Script generation started' });
+    } catch (err) {
+      console.error('[generate] updateIdeaStatus failed:', err);
     }
-
-    return NextResponse.json({ error: 'Unknown type' }, { status: 400 });
-
-  } catch (error) {
-    console.error('[generate] Error:', error);
-    if (!contentType.includes('application/json')) {
-      return NextResponse.redirect(new URL('/ideas', request.url));
+    const result = await safeSend('cg160/scripts.generate', { idea_id });
+    if (!result.ok) {
+      return NextResponse.json({
+        error: 'Inngest send failed',
+        detail: result.error,
+        hint: 'Check INNGEST_EVENT_KEY in Vercel environment variables',
+      }, { status: 500 });
     }
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Script generation started' });
   }
+
+  return NextResponse.json({ error: 'Unknown type' }, { status: 400 });
 }

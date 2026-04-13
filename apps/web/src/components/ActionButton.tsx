@@ -88,9 +88,11 @@ export function GenerateButton({
 }: GenerateButtonProps) {
   const router = useRouter();
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
 
   async function handleClick() {
     setState('loading');
+    setErrorMsg('');
     try {
       const body: Record<string, unknown> = { type };
       if (type === 'ideas') body.count = count;
@@ -101,16 +103,22 @@ export function GenerateButton({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: res.statusText }));
+        const msg = data.detail ?? data.error ?? res.statusText;
+        throw new Error(msg);
+      }
       setState('done');
       setTimeout(() => {
         router.refresh();
         setState('idle');
       }, 1500);
     } catch (err) {
-      console.error('GenerateButton error:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('GenerateButton error:', msg);
+      setErrorMsg(msg);
       setState('error');
-      setTimeout(() => setState('idle'), 2500);
+      setTimeout(() => { setState('idle'); setErrorMsg(''); }, 6000);
     }
   }
 
@@ -123,7 +131,7 @@ export function GenerateButton({
     : isDone
     ? '✓ Job enviado!'
     : isError
-    ? '✗ Erro — tente novamente'
+    ? '✗ Falhou'
     : label;
 
   const extraColor = isDone
@@ -133,12 +141,17 @@ export function GenerateButton({
     : '';
 
   return (
-    <button
-      onClick={handleClick}
-      disabled={isLoading || isDone}
-      className={`text-sm px-4 py-2 rounded-lg font-medium transition-all ${extraColor || COLORS[variant]} ${className}`}
-    >
-      {displayLabel}
-    </button>
+    <div className="inline-flex flex-col gap-1">
+      <button
+        onClick={handleClick}
+        disabled={isLoading || isDone}
+        className={`text-sm px-4 py-2 rounded-lg font-medium transition-all ${extraColor || COLORS[variant]} ${className}`}
+      >
+        {displayLabel}
+      </button>
+      {isError && errorMsg && (
+        <span className="text-xs text-red-400 max-w-xs break-words">{errorMsg}</span>
+      )}
+    </div>
   );
 }
