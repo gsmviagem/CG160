@@ -189,7 +189,7 @@ export async function generateIdeas(
 ): Promise<GeneratedIdeaRaw[]> {
   const prompt = buildIdeaGenerationPrompt(ctx);
   const response = await callClaude(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'llama-3.3-70b-versatile',
     maxOutputTokens: 8192,
     temperature: 0.9,
   });

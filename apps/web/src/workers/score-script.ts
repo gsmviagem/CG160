@@ -35,7 +35,7 @@ export const fnScoreScript = inngest.createFunction(
       });
 
       const response = await callClaudeAnalytical(prompt, {
-        model: 'gemini-2.0-flash',
+        model: 'llama-3.3-70b-versatile',
         maxOutputTokens: 3000,
       });
 

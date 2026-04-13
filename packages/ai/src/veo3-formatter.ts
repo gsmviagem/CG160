@@ -171,7 +171,7 @@ Return ONLY valid JSON in this exact format:
 }`;
 
   const response = await callGemini(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'llama-3.3-70b-versatile',
     temperature: 0.75,
     maxOutputTokens: 8192,
   });

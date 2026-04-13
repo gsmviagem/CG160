@@ -18,7 +18,8 @@
       "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add -A; git commit -m 'feat: replace Anthropic with Google Gemini \\(free tier\\)'; git push\")",
       "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add -A; git commit -m 'fix: update all LLM calls to use Gemini options format'; git push\")",
       "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add -A; git commit -m 'feat: detailed Veo 3 script format with character bible, audio direction, production notes'; git push\")",
-      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add -A; git commit -m 'feat: switch LLM provider to Groq \\(free tier, llama-3.3-70b\\)'; git push\")"
+      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add -A; git commit -m 'feat: switch LLM provider to Groq \\(free tier, llama-3.3-70b\\)'; git push\")",
+      "Bash(powershell -Command \"cd 'D:\\\\Shalom\\\\CG 160'; git add -A; git commit -m 'fix: replace all gemini-2.0-flash model refs with llama-3.3-70b-versatile'; git push\")"
     ]
   }
 }

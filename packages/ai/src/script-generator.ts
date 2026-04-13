@@ -166,7 +166,7 @@ export async function generateScript(
   const prompt = buildScriptGenerationPrompt(ctx);
 
   const response = await callGemini(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'llama-3.3-70b-versatile',
     maxOutputTokens: 8192,
     temperature: 0.85,
   });
@@ -202,7 +202,7 @@ ${ctx.previous_script}
 Address the rejection reason directly. Be meaningfully different and better.`;
 
   const response = await callGemini(basePrompt + regenerationSuffix, {
-    model: 'gemini-2.0-flash',
+    model: 'llama-3.3-70b-versatile',
     maxOutputTokens: 8192,
     temperature: 0.95,
   });
