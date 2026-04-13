@@ -149,6 +149,7 @@ Return ONLY valid JSON:
       "description": "What is happening — action and context",
       "dialogue": "Exact words spoken. Empty string if silent.",
       "visual_direction": "DETAILED: camera angle, movement, character appearance, environment, lighting. Specific enough for Veo 3.",
+      "image_prompt": "Gemini Imagen prompt for a STILL IMAGE of this scene. Cinematic composition, lighting, mood, character appearance. No camera movement. 1-2 sentences. English only.",
       "duration_estimate_seconds": 5,
       "sound_notes": "Voice tone + background music + specific sound effects"
     }

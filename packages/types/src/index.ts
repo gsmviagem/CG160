@@ -123,6 +123,7 @@ export interface ScriptScene {
   description: string;
   dialogue: string;
   visual_direction: string;
+  image_prompt?: string;   // Gemini Imagen still-image prompt (English)
   duration_estimate_seconds: number;
   sound_notes?: string;
 }

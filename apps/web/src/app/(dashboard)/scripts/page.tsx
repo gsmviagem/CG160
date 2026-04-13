@@ -51,7 +51,7 @@ function ScenePromptBlock({
   audioDirection: string;
   imageFilename: string;
 }) {
-  const prompt = buildScenePrompt(scene, characterProfile, audioDirection);
+  const veoPrompt = buildScenePrompt(scene, characterProfile, audioDirection);
   return (
     <div className="border border-gray-700 rounded-lg overflow-hidden">
       {/* Header */}
@@ -63,15 +63,27 @@ function ScenePromptBlock({
             <span className="text-xs text-blue-400 italic truncate max-w-xs">"{scene.dialogue}"</span>
           )}
         </div>
-        <CopyButton text={prompt} />
+        <CopyButton text={veoPrompt} />
       </div>
-      {/* Prompt */}
+      {/* Veo 3 prompt */}
       <pre className="px-3 py-3 text-xs text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-900/60 font-mono">
-        {prompt}
+        {veoPrompt}
       </pre>
+      {/* Gemini image prompt */}
+      {scene.image_prompt && (
+        <div className="border-t border-gray-700">
+          <div className="flex items-center justify-between px-3 py-2 bg-purple-950/40">
+            <span className="text-xs font-semibold text-purple-300">📸 Prompt Gemini — imagem estática</span>
+            <CopyButton text={scene.image_prompt} />
+          </div>
+          <pre className="px-3 py-2 text-xs text-purple-200 whitespace-pre-wrap leading-relaxed bg-purple-950/20 font-mono">
+            {scene.image_prompt}
+          </pre>
+        </div>
+      )}
       {/* Filename pill */}
       <div className="px-3 py-2 bg-gray-800/50 border-t border-gray-700 flex items-center gap-2">
-        <span className="text-xs text-gray-500">📁 Imagem desta cena:</span>
+        <span className="text-xs text-gray-500">📁 Salvar como:</span>
         <code className="text-xs text-amber-400 bg-gray-900 px-2 py-0.5 rounded font-mono select-all">
           {imageFilename}
         </code>
@@ -193,6 +205,15 @@ function ScriptCard({ script }: { script: Script }) {
               action="images_ready" label="📸 Imagens prontas" variant="neutral"
             />
           )}
+          {/* Video ready — creates the video record */}
+          {script.status === 'generating_video' && (
+            <a
+              href={`/api/videos/mark-ready?script_id=${script.id}`}
+              className="text-xs px-3 py-1.5 rounded bg-blue-700 hover:bg-blue-600 text-white font-medium transition-colors"
+            >
+              🎬 Vídeo pronto
+            </a>
+          )}
           <div className="text-right">
             <div className={`text-2xl font-bold ${scoreColor(script.total_score)}`}>
               {script.total_score?.toFixed(1) ?? '—'}
@@ -313,11 +334,12 @@ function ScriptCard({ script }: { script: Script }) {
 export default async function ScriptsPage() {
   const scripts = await getScripts();
   const byStatus = {
-    pending:       scripts.filter(s => s.status === 'pending'),
-    approved:      scripts.filter(s => s.status === 'approved'),
-    images_ready:  scripts.filter(s => s.status === 'images_ready'),
-    rejected:      scripts.filter(s => s.status === 'rejected'),
-    other:         scripts.filter(s => !['pending', 'approved', 'images_ready', 'rejected'].includes(s.status)),
+    pending:          scripts.filter(s => s.status === 'pending'),
+    approved:         scripts.filter(s => s.status === 'approved'),
+    images_ready:     scripts.filter(s => s.status === 'images_ready'),
+    generating_video: scripts.filter(s => s.status === 'generating_video'),
+    rejected:         scripts.filter(s => s.status === 'rejected'),
+    other:            scripts.filter(s => !['pending', 'approved', 'images_ready', 'generating_video', 'rejected'].includes(s.status)),
   };
 
   return (
@@ -368,6 +390,17 @@ export default async function ScriptsPage() {
           </h2>
           <div className="space-y-4">
             {byStatus.images_ready.map(s => <ScriptCard key={s.id} script={s} />)}
+          </div>
+        </section>
+      )}
+
+      {byStatus.generating_video.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-blue-400 uppercase tracking-wider mb-3">
+            Imagens aprovadas — criar vídeo ({byStatus.generating_video.length})
+          </h2>
+          <div className="space-y-4">
+            {byStatus.generating_video.map(s => <ScriptCard key={s.id} script={s} />)}
           </div>
         </section>
       )}
