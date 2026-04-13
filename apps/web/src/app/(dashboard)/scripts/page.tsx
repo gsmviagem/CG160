@@ -8,11 +8,24 @@ export const revalidate = 0;
 
 async function getScripts() {
   const db = getDB();
-  const [pending, approved] = await Promise.all([
-    db.getScriptsByStatus('pending', 30),
-    db.getScriptsByStatus('approved', 10),
-  ]);
-  return { pending, approved };
+  const { getServiceClient } = await import('@/lib/supabase');
+  const client = getServiceClient();
+
+  // Fetch all scripts regardless of status to avoid missing any
+  const { data: all } = await client
+    .from('scripts')
+    .select('*, ideas(*)')
+    .not('status', 'eq', 'rejected')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  const scripts = (all ?? []) as Script[];
+
+  const pending    = scripts.filter(s => s.status === 'pending');
+  const approved   = scripts.filter(s => s.status === 'approved');
+  const videoReady = scripts.filter(s => s.status === 'video_ready');
+
+  return { pending, approved, videoReady, total: scripts.length };
 }
 
 // Build a complete, ready-to-paste Veo 3 prompt for a single scene
@@ -233,8 +246,7 @@ function ScriptCard({ script }: { script: Script }) {
 }
 
 export default async function ScriptsPage() {
-  const { pending, approved } = await getScripts();
-  const total = pending.length + approved.length;
+  const { pending, approved, videoReady, total } = await getScripts();
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -273,6 +285,17 @@ export default async function ScriptsPage() {
           </h2>
           <div className="space-y-4">
             {approved.map(s => <ScriptCard key={s.id} script={s} />)}
+          </div>
+        </section>
+      )}
+
+      {videoReady.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-purple-400 uppercase tracking-wider mb-3">
+            Vídeo Pronto ({videoReady.length})
+          </h2>
+          <div className="space-y-4">
+            {videoReady.map(s => <ScriptCard key={s.id} script={s} />)}
           </div>
         </section>
       )}
