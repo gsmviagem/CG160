@@ -27,7 +27,7 @@ export default async function DashboardPage() {
           <p className="text-gray-500 mt-1 text-sm">Status do content engine</p>
         </div>
         <div className="flex gap-3 flex-wrap">
-          <GenerateButton type="ideas" count={5} label="+ Gerar Ideias" variant="primary" />
+          <GenerateButton type="ideas" count={5} label="+ Gerar Ideias" variant="primary" currentCount={stats.ideas_pending} />
           <a href="/approval"
             className="text-sm px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg font-medium transition-colors">
             Fila de Aprovação →
@@ -39,7 +39,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <GeneratingBanner />
+      <GeneratingBanner itemCount={stats.ideas_pending + stats.scripts_pending} />
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

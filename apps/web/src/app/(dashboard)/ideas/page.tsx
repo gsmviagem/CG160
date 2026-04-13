@@ -120,11 +120,11 @@ export default async function IdeasPage() {
               <div className="text-gray-600 text-xs">Com Script</div>
             </div>
           </div>
-          <GenerateButton type="ideas" count={5} label="+ Gerar Ideias" variant="primary" />
+          <GenerateButton type="ideas" count={5} label="+ Gerar Ideias" variant="primary" currentCount={total} />
         </div>
       </div>
 
-      <GeneratingBanner />
+      <GeneratingBanner itemCount={total} />
 
       {/* Pending */}
       <section className="mb-8">

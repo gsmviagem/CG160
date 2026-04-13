@@ -82,10 +82,11 @@ interface GenerateButtonProps {
   label: string;
   variant?: Variant;
   className?: string;
+  currentCount?: number; // passed so banner knows when new items appear
 }
 
 export function GenerateButton({
-  type, ideaId, count = 5, label, variant = 'primary', className = '',
+  type, ideaId, count = 5, label, variant = 'primary', className = '', currentCount = 0,
 }: GenerateButtonProps) {
   const router = useRouter();
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
@@ -110,7 +111,7 @@ export function GenerateButton({
         throw new Error(msg);
       }
       // Activate the GeneratingBanner so user can see progress
-      setGenerating(type);
+      setGenerating(type, currentCount);
       setState('done');
       setTimeout(() => setState('idle'), 1200);
     } catch (err) {

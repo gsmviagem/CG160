@@ -1,6 +1,7 @@
 import { getDB } from '@/lib/supabase';
-import { formatScore, scoreColor, statusBadgeColor, relativeTime } from '@/lib/utils';
+import { scoreColor, statusBadgeColor, relativeTime } from '@/lib/utils';
 import { GeneratingBanner } from '@/components/GeneratingBanner';
+import { CopyButton } from '@/components/CopyButton';
 import type { Script } from '@cg160/types';
 
 export const revalidate = 0;
@@ -12,6 +13,42 @@ async function getScripts() {
     db.getScriptsByStatus('approved', 10),
   ]);
   return { pending, approved };
+}
+
+// Build a complete, ready-to-paste Veo 3 prompt for a single scene
+function buildScenePrompt(
+  scene: Script['scenes'][number],
+  characterProfile: string,
+  audioDirection: string
+): string {
+  const parts: string[] = [];
+
+  // Character block (English — for Veo 3)
+  if (characterProfile) {
+    parts.push(`CHARACTER PROFILE:\n${characterProfile}`);
+  }
+
+  // Scene header
+  parts.push(`SCENE ${scene.scene_number} — ${scene.duration_estimate_seconds}s`);
+
+  // Dialogue (can be PT-BR — Veo 3 handles it)
+  if (scene.dialogue) {
+    parts.push(`Dialogue: "${scene.dialogue}"`);
+  }
+
+  // Visual direction (English)
+  if (scene.visual_direction) {
+    parts.push(`Visual: ${scene.visual_direction}`);
+  }
+
+  // Audio (English)
+  if (scene.sound_notes) {
+    parts.push(`Audio: ${scene.sound_notes}`);
+  } else if (audioDirection) {
+    parts.push(`Audio: ${audioDirection}`);
+  }
+
+  return parts.join('\n\n');
 }
 
 function ScoreBar({ label, value }: { label: string; value: number | null }) {
@@ -29,8 +66,44 @@ function ScoreBar({ label, value }: { label: string; value: number | null }) {
   );
 }
 
+function ScenePromptBlock({
+  scene,
+  characterProfile,
+  audioDirection,
+}: {
+  scene: Script['scenes'][number];
+  characterProfile: string;
+  audioDirection: string;
+}) {
+  const prompt = buildScenePrompt(scene, characterProfile, audioDirection);
+
+  return (
+    <div className="border border-gray-700 rounded-lg overflow-hidden">
+      {/* Scene header */}
+      <div className="flex items-center justify-between px-3 py-2 bg-gray-800">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-white">Cena {scene.scene_number}</span>
+          <span className="text-xs text-gray-500">{scene.duration_estimate_seconds}s</span>
+          {scene.dialogue && (
+            <span className="text-xs text-blue-400 italic truncate max-w-xs">"{scene.dialogue}"</span>
+          )}
+        </div>
+        <CopyButton text={prompt} />
+      </div>
+
+      {/* Prompt content */}
+      <pre className="px-3 py-3 text-xs text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-900/60 font-mono">
+        {prompt}
+      </pre>
+    </div>
+  );
+}
+
 function ScriptCard({ script }: { script: Script }) {
   const metadata = script.metadata as Record<string, string>;
+  const characterProfile: string = metadata?.character_visual_bible ?? '';
+  const audioDirection: string = metadata?.audio_direction ?? '';
+  const scenes = Array.isArray(script.scenes) ? script.scenes : [];
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
@@ -65,73 +138,52 @@ function ScriptCard({ script }: { script: Script }) {
       {/* Script content */}
       <div className="px-4 py-3 border-b border-gray-800">
         <div className="text-xs text-gray-500 font-medium mb-2">SCRIPT</div>
-        <p className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">
-          {script.content}
-        </p>
+        <p className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">{script.content}</p>
       </div>
 
-      {/* Scenes */}
-      {script.scenes && script.scenes.length > 0 && (
-        <div className="px-4 py-3 border-b border-gray-800">
-          <div className="text-xs text-gray-500 font-medium mb-2">
-            CENAS ({script.scenes.length})
+      {/* ── PROMPTS VEO 3 — one per scene, ready to paste ── */}
+      {scenes.length > 0 && (
+        <div className="px-4 py-4 border-b border-gray-800">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-xs text-green-400 font-bold uppercase tracking-wider">
+              Prompts Veo 3 — {scenes.length} cenas prontas para colar
+            </div>
+            <span className="text-xs text-gray-600">1 prompt por cena</span>
           </div>
           <div className="space-y-3">
-            {script.scenes.map((scene) => (
-              <div key={scene.scene_number} className="bg-gray-800/50 rounded p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded">
-                    Cena {scene.scene_number}
-                  </span>
-                  <span className="text-xs text-gray-500">{scene.duration_estimate_seconds}s</span>
-                </div>
-                {scene.dialogue && (
-                  <p className="text-sm text-white mb-1">
-                    <span className="text-gray-500">Diálogo:</span> "{scene.dialogue}"
-                  </p>
-                )}
-                <p className="text-xs text-gray-400 mb-1">
-                  <span className="text-gray-500">Visual:</span> {scene.visual_direction}
-                </p>
-                {scene.sound_notes && (
-                  <p className="text-xs text-purple-400">
-                    <span className="text-gray-500">Áudio:</span> {scene.sound_notes}
-                  </p>
-                )}
-              </div>
+            {scenes.map((scene) => (
+              <ScenePromptBlock
+                key={scene.scene_number}
+                scene={scene}
+                characterProfile={characterProfile}
+                audioDirection={audioDirection}
+              />
             ))}
           </div>
+          <p className="text-xs text-gray-600 mt-3">
+            Cole cada prompt diretamente no Veo 3. O perfil do personagem está incluído em cada um para manter consistência visual.
+          </p>
         </div>
       )}
 
-      {/* Veo 3 Production Package */}
-      {metadata?.video_prompt && (
-        <div className="px-4 py-3 border-b border-gray-800">
-          <div className="text-xs text-green-400 font-medium mb-2">PROMPT VEO 3 — PRONTO PARA COLAR</div>
-          <div className="bg-gray-800 rounded p-3">
-            <p className="text-sm text-gray-200 leading-relaxed">{metadata.video_prompt}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Character Bible */}
-      {(metadata as Record<string, string>)?.character_visual_bible && (
+      {/* Perfil do Personagem */}
+      {characterProfile && (
         <div className="px-4 py-3 border-b border-gray-800">
           <div className="text-xs text-yellow-400 font-medium mb-2">PERFIL DO PERSONAGEM</div>
-          <p className="text-sm text-gray-300">{metadata.character_visual_bible}</p>
+          <p className="text-sm text-gray-300">{characterProfile}</p>
         </div>
       )}
 
-      {/* Audio Direction */}
-      {(metadata as Record<string, string>)?.audio_direction && (
+      {/* Direção de Áudio */}
+      {audioDirection && (
         <div className="px-4 py-3 border-b border-gray-800">
           <div className="text-xs text-purple-400 font-medium mb-2">DIREÇÃO DE ÁUDIO</div>
-          <p className="text-sm text-gray-300">{metadata.audio_direction}</p>
+          <p className="text-sm text-gray-300">{audioDirection}</p>
         </div>
       )}
 
-      {/* Production Notes */}
-      {(metadata as Record<string, string>)?.production_notes && (
+      {/* Notas de Produção */}
+      {metadata?.production_notes && (
         <div className="px-4 py-3 border-b border-gray-800">
           <div className="text-xs text-orange-400 font-medium mb-2">NOTAS DE PRODUÇÃO</div>
           <p className="text-sm text-gray-300">{metadata.production_notes}</p>
@@ -143,25 +195,25 @@ function ScriptCard({ script }: { script: Script }) {
         <div className="px-4 py-3 border-b border-gray-800">
           <div className="text-xs text-gray-500 font-medium mb-3">PONTUAÇÃO — 14 DIMENSÕES</div>
           <div className="space-y-1.5">
-            <ScoreBar label="Hook strength" value={script.hook_strength} />
-            <ScoreBar label="Clarity" value={script.clarity_score} />
+            <ScoreBar label="Hook strength"    value={script.hook_strength} />
+            <ScoreBar label="Clarity"          value={script.clarity_score} />
             <ScoreBar label="Emotional trigger" value={script.emotional_trigger_score} />
-            <ScoreBar label="Curiosity gap" value={script.curiosity_gap_score} />
-            <ScoreBar label="Pacing density" value={script.pacing_density_score} />
+            <ScoreBar label="Curiosity gap"    value={script.curiosity_gap_score} />
+            <ScoreBar label="Pacing density"   value={script.pacing_density_score} />
             <ScoreBar label="Setup simplicity" value={script.setup_simplicity_score} />
-            <ScoreBar label="Punchline" value={script.punchline_strength} />
-            <ScoreBar label="Loop potential" value={script.loop_potential} />
-            <ScoreBar label="Shareability" value={script.shareability_score} />
-            <ScoreBar label="Memorability" value={script.memorability_score} />
-            <ScoreBar label="Novelty" value={script.novelty_score} />
+            <ScoreBar label="Punchline"        value={script.punchline_strength} />
+            <ScoreBar label="Loop potential"   value={script.loop_potential} />
+            <ScoreBar label="Shareability"     value={script.shareability_score} />
+            <ScoreBar label="Memorability"     value={script.memorability_score} />
+            <ScoreBar label="Novelty"          value={script.novelty_score} />
             <ScoreBar label="Absurdity balance" value={script.absurdity_balance} />
             <ScoreBar label="Visual feasibility" value={script.visual_feasibility} />
-            <ScoreBar label="Viral alignment" value={script.viral_structure_alignment} />
+            <ScoreBar label="Viral alignment"  value={script.viral_structure_alignment} />
           </div>
         </div>
       )}
 
-      {/* Meta */}
+      {/* Meta tags */}
       <div className="px-4 py-3 flex items-center gap-3 flex-wrap">
         {script.duration_estimate_seconds && (
           <span className="text-xs text-gray-500">{script.duration_estimate_seconds}s</span>
@@ -189,11 +241,11 @@ export default async function ScriptsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Scripts</h1>
         <p className="text-gray-500 mt-1 text-sm">
-          {total} script{total !== 1 ? 's' : ''} — com pacote completo para Veo 3
+          {total} script{total !== 1 ? 's' : ''} — prompts Veo 3 prontos por cena
         </p>
       </div>
 
-      <GeneratingBanner />
+      <GeneratingBanner itemCount={total} />
 
       {total === 0 && (
         <div className="text-center py-20 text-gray-600">

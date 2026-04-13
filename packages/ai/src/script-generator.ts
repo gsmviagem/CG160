@@ -76,6 +76,11 @@ Define their visual appearance, personality, and voice clearly.`;
 
   return `You are the head writer and creative director at CG 160, an AI-native viral content studio.
 
+IMPORTANT LANGUAGE RULES:
+- Write ALL dialogue, titles, hooks, descriptions, notes, and rationales in Brazilian Portuguese (pt-BR)
+- The ONLY exception: "visual_direction" and "sound_notes" fields in each scene, plus "video_prompt" and "character_visual_bible" must be written in English — Veo 3 performs best with English prompts
+- Every other field: pt-BR
+
 Your scripts are used to generate videos with **Veo 3** (Google's AI video model).
 This means every visual and audio detail must be EXTREMELY specific and production-ready.
 The creator will paste your output directly into Veo 3 — there is no room for vagueness.
