@@ -21,21 +21,34 @@ export async function sendInngestEvent(
   if (!eventKey) {
     return { ok: false, error: 'INNGEST_EVENT_KEY not set' };
   }
-  try {
-    const res = await fetch(`https://inn.gs/e/${eventKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify([{ name, data }]),
-    });
-    if (!res.ok) {
+
+  // Try without env header first (production key), fall back with env header if needed
+  const attempts = [
+    { headers: { 'Content-Type': 'application/json' } },
+    { headers: { 'Content-Type': 'application/json', 'x-inngest-env': 'production' } },
+  ];
+
+  for (const attempt of attempts) {
+    try {
+      const res = await fetch(`https://inn.gs/e/${eventKey}`, {
+        method: 'POST',
+        headers: attempt.headers,
+        body: JSON.stringify([{ name, data }]),
+      });
+      if (res.ok) return { ok: true };
       const text = await res.text();
-      return { ok: false, error: `Inngest HTTP ${res.status}: ${text}` };
+      // If it's not an env error, don't retry
+      if (!text.includes('env_unspecified') && !text.includes('Branch environment')) {
+        return { ok: false, error: `Inngest HTTP ${res.status}: ${text}` };
+      }
+      // env error → try next attempt with header
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { ok: false, error: msg };
     }
-    return { ok: true };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { ok: false, error: msg };
   }
+
+  return { ok: false, error: 'All Inngest send attempts failed. Check INNGEST_EVENT_KEY is a Production key.' };
 }
 
 // ---- Event Types -------------------------------------------
