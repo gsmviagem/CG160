@@ -2,7 +2,8 @@ import { getDB } from '@/lib/supabase';
 import { scoreColor, statusBadgeColor, relativeTime } from '@/lib/utils';
 import { GeneratingBanner } from '@/components/GeneratingBanner';
 import { CopyButton } from '@/components/CopyButton';
-import { DeleteButton } from '@/components/ActionButton';
+import { DeleteButton, ApprovalButton } from '@/components/ActionButton';
+import { buildFileManifest } from '@/lib/filenames';
 import type { Script, ScriptScene } from '@cg160/types';
 
 export const revalidate = 0;
@@ -20,10 +21,10 @@ function buildScenePrompt(
   const parts: string[] = [];
   if (characterProfile) parts.push(`CHARACTER PROFILE:\n${characterProfile}`);
   parts.push(`SCENE ${scene.scene_number} — ${scene.duration_estimate_seconds}s`);
-  if (scene.dialogue)        parts.push(`Dialogue: "${scene.dialogue}"`);
+  if (scene.dialogue)         parts.push(`Dialogue: "${scene.dialogue}"`);
   if (scene.visual_direction) parts.push(`Visual: ${scene.visual_direction}`);
-  if (scene.sound_notes)     parts.push(`Audio: ${scene.sound_notes}`);
-  else if (audioDirection)   parts.push(`Audio: ${audioDirection}`);
+  if (scene.sound_notes)      parts.push(`Audio: ${scene.sound_notes}`);
+  else if (audioDirection)    parts.push(`Audio: ${audioDirection}`);
   return parts.join('\n\n');
 }
 
@@ -42,16 +43,20 @@ function ScoreBar({ label, value }: { label: string; value: number | null }) {
   );
 }
 
-function ScenePromptBlock({ scene, characterProfile, audioDirection }: {
+function ScenePromptBlock({
+  scene, characterProfile, audioDirection, imageFilename,
+}: {
   scene: ScriptScene;
   characterProfile: string;
   audioDirection: string;
+  imageFilename: string;
 }) {
   const prompt = buildScenePrompt(scene, characterProfile, audioDirection);
   return (
     <div className="border border-gray-700 rounded-lg overflow-hidden">
+      {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 bg-gray-800">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-bold text-white">Cena {scene.scene_number}</span>
           <span className="text-xs text-gray-500">{scene.duration_estimate_seconds}s</span>
           {scene.dialogue && (
@@ -60,9 +65,82 @@ function ScenePromptBlock({ scene, characterProfile, audioDirection }: {
         </div>
         <CopyButton text={prompt} />
       </div>
+      {/* Prompt */}
       <pre className="px-3 py-3 text-xs text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-900/60 font-mono">
         {prompt}
       </pre>
+      {/* Filename pill */}
+      <div className="px-3 py-2 bg-gray-800/50 border-t border-gray-700 flex items-center gap-2">
+        <span className="text-xs text-gray-500">📁 Imagem desta cena:</span>
+        <code className="text-xs text-amber-400 bg-gray-900 px-2 py-0.5 rounded font-mono select-all">
+          {imageFilename}
+        </code>
+      </div>
+    </div>
+  );
+}
+
+function FileManifestBlock({ script, sceneCount }: { script: Script; sceneCount: number }) {
+  const manifest = buildFileManifest(script.id, sceneCount);
+
+  return (
+    <div className="px-4 py-4 border-b border-gray-800 bg-gray-900/40">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">📁 Arquivos a criar</span>
+        <span className="text-xs text-gray-600">— bucket: <code className="text-gray-400">cg160-media</code></span>
+      </div>
+
+      {/* Pipeline reminder */}
+      <div className="flex items-center gap-1 text-xs text-gray-500 mb-4">
+        <span className="px-2 py-0.5 rounded bg-green-900/40 text-green-400">✓ Script</span>
+        <span>→</span>
+        <span className="px-2 py-0.5 rounded bg-amber-900/40 text-amber-400 font-medium">📸 Criar imagens</span>
+        <span>→</span>
+        <span className="px-2 py-0.5 rounded bg-purple-900/40 text-purple-400">Aprovar imagens</span>
+        <span>→</span>
+        <span className="px-2 py-0.5 rounded bg-blue-900/40 text-blue-400">🎬 Animar → Vídeo</span>
+      </div>
+
+      {/* Scene files table */}
+      <div className="rounded-lg overflow-hidden border border-gray-700 mb-3">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="bg-gray-800 text-gray-400">
+              <th className="text-left px-3 py-2 font-medium">Tipo</th>
+              <th className="text-left px-3 py-2 font-medium">Nome do arquivo</th>
+              <th className="text-left px-3 py-2 font-medium hidden sm:table-cell">Caminho no bucket</th>
+            </tr>
+          </thead>
+          <tbody>
+            {manifest.scenes.map(s => (
+              <tr key={s.sceneNumber} className="border-t border-gray-800">
+                <td className="px-3 py-2 text-gray-500">Imagem cena {s.sceneNumber}</td>
+                <td className="px-3 py-2">
+                  <code className="text-amber-400 select-all">{s.filename}</code>
+                </td>
+                <td className="px-3 py-2 hidden sm:table-cell">
+                  <code className="text-gray-500">{s.storagePath}</code>
+                </td>
+              </tr>
+            ))}
+            <tr className="border-t border-gray-700 bg-gray-800/30">
+              <td className="px-3 py-2 text-gray-500">Vídeo final</td>
+              <td className="px-3 py-2">
+                <code className="text-blue-400 select-all">{manifest.video.filename}</code>
+              </td>
+              <td className="px-3 py-2 hidden sm:table-cell">
+                <code className="text-gray-500">{manifest.video.storagePath}</code>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-xs text-gray-600">
+        Crie os arquivos com esses nomes exatos e faça upload no bucket{' '}
+        <code className="text-gray-400">cg160-media</code> no Supabase Storage.
+        O sistema identifica automaticamente pelos nomes.
+      </p>
     </div>
   );
 }
@@ -90,7 +168,24 @@ function ScriptCard({ script }: { script: Script }) {
             <p className="text-xs text-red-400 mt-1">Rejeitado: {script.rejection_reason}</p>
           )}
         </div>
-        <div className="flex items-start gap-3 flex-shrink-0">
+        <div className="flex items-start gap-2 flex-shrink-0">
+          {/* Approval buttons for pending scripts */}
+          {script.status === 'pending' && (
+            <div className="flex gap-1">
+              <ApprovalButton
+                entityType="script" entityId={script.id}
+                action="approved" label="Aprovar" variant="success"
+              />
+              <ApprovalButton
+                entityType="script" entityId={script.id}
+                action="rejected" label="Rejeitar" variant="danger"
+              />
+              <ApprovalButton
+                entityType="script" entityId={script.id}
+                action="regenerate_requested" label="Regenerar" variant="neutral"
+              />
+            </div>
+          )}
           <div className="text-right">
             <div className={`text-2xl font-bold ${scoreColor(script.total_score)}`}>
               {script.total_score?.toFixed(1) ?? '—'}
@@ -113,14 +208,14 @@ function ScriptCard({ script }: { script: Script }) {
         <p className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">{script.content}</p>
       </div>
 
-      {/* Prompts Veo 3 */}
+      {/* Prompts Veo 3 — with filenames embedded per scene */}
       {scenes.length > 0 && (
         <div className="px-4 py-4 border-b border-gray-800">
           <div className="flex items-center justify-between mb-3">
             <div className="text-xs text-green-400 font-bold uppercase tracking-wider">
-              Prompts Veo 3 — {scenes.length} cenas prontas para colar
+              Prompts Veo 3 — {scenes.length} cenas
             </div>
-            <span className="text-xs text-gray-600">1 prompt por cena</span>
+            <span className="text-xs text-gray-600">1 prompt por cena · pronto para colar</span>
           </div>
           <div className="space-y-3">
             {scenes.map(scene => (
@@ -129,14 +224,18 @@ function ScriptCard({ script }: { script: Script }) {
                 scene={scene}
                 characterProfile={characterProfile}
                 audioDirection={audioDirection}
+                imageFilename={`${script.id.replace(/-/g, '').slice(0, 8)}_cena${scene.scene_number}.jpg`}
               />
             ))}
           </div>
           <p className="text-xs text-gray-600 mt-3">
-            O perfil do personagem está incluído em cada prompt para consistência visual no Veo 3.
+            Perfil do personagem incluído em cada prompt para consistência visual no Veo 3.
           </p>
         </div>
       )}
+
+      {/* File manifest — pipeline step */}
+      <FileManifestBlock script={script} sceneCount={scenes.length} />
 
       {/* Perfil do Personagem */}
       {characterProfile && (
@@ -167,20 +266,20 @@ function ScriptCard({ script }: { script: Script }) {
         <div className="px-4 py-3 border-b border-gray-800">
           <div className="text-xs text-gray-500 font-medium mb-3">PONTUAÇÃO — 14 DIMENSÕES</div>
           <div className="space-y-1.5">
-            <ScoreBar label="Hook strength"     value={script.hook_strength} />
-            <ScoreBar label="Clarity"           value={script.clarity_score} />
-            <ScoreBar label="Emotional trigger" value={script.emotional_trigger_score} />
-            <ScoreBar label="Curiosity gap"     value={script.curiosity_gap_score} />
-            <ScoreBar label="Pacing density"    value={script.pacing_density_score} />
-            <ScoreBar label="Setup simplicity"  value={script.setup_simplicity_score} />
-            <ScoreBar label="Punchline"         value={script.punchline_strength} />
-            <ScoreBar label="Loop potential"    value={script.loop_potential} />
-            <ScoreBar label="Shareability"      value={script.shareability_score} />
-            <ScoreBar label="Memorability"      value={script.memorability_score} />
-            <ScoreBar label="Novelty"           value={script.novelty_score} />
-            <ScoreBar label="Absurdity balance" value={script.absurdity_balance} />
+            <ScoreBar label="Hook strength"      value={script.hook_strength} />
+            <ScoreBar label="Clarity"            value={script.clarity_score} />
+            <ScoreBar label="Emotional trigger"  value={script.emotional_trigger_score} />
+            <ScoreBar label="Curiosity gap"      value={script.curiosity_gap_score} />
+            <ScoreBar label="Pacing density"     value={script.pacing_density_score} />
+            <ScoreBar label="Setup simplicity"   value={script.setup_simplicity_score} />
+            <ScoreBar label="Punchline"          value={script.punchline_strength} />
+            <ScoreBar label="Loop potential"     value={script.loop_potential} />
+            <ScoreBar label="Shareability"       value={script.shareability_score} />
+            <ScoreBar label="Memorability"       value={script.memorability_score} />
+            <ScoreBar label="Novelty"            value={script.novelty_score} />
+            <ScoreBar label="Absurdity balance"  value={script.absurdity_balance} />
             <ScoreBar label="Visual feasibility" value={script.visual_feasibility} />
-            <ScoreBar label="Viral alignment"   value={script.viral_structure_alignment} />
+            <ScoreBar label="Viral alignment"    value={script.viral_structure_alignment} />
           </div>
         </div>
       )}
@@ -207,10 +306,10 @@ function ScriptCard({ script }: { script: Script }) {
 export default async function ScriptsPage() {
   const scripts = await getScripts();
   const byStatus = {
-    pending:     scripts.filter(s => s.status === 'pending'),
-    approved:    scripts.filter(s => s.status === 'approved'),
-    rejected:    scripts.filter(s => s.status === 'rejected'),
-    other:       scripts.filter(s => !['pending','approved','rejected'].includes(s.status)),
+    pending:  scripts.filter(s => s.status === 'pending'),
+    approved: scripts.filter(s => s.status === 'approved'),
+    rejected: scripts.filter(s => s.status === 'rejected'),
+    other:    scripts.filter(s => !['pending', 'approved', 'rejected'].includes(s.status)),
   };
 
   return (
@@ -218,7 +317,7 @@ export default async function ScriptsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Scripts</h1>
         <p className="text-gray-500 mt-1 text-sm">
-          {scripts.length} script{scripts.length !== 1 ? 's' : ''} no total — prompts Veo 3 prontos por cena
+          {scripts.length} script{scripts.length !== 1 ? 's' : ''} — prompts Veo 3 + nomes de arquivo por cena
         </p>
       </div>
 
@@ -246,7 +345,7 @@ export default async function ScriptsPage() {
       {byStatus.approved.length > 0 && (
         <section className="mb-8">
           <h2 className="text-sm font-semibold text-green-400 uppercase tracking-wider mb-3">
-            Aprovados ({byStatus.approved.length})
+            Aprovados — criar imagens ({byStatus.approved.length})
           </h2>
           <div className="space-y-4">
             {byStatus.approved.map(s => <ScriptCard key={s.id} script={s} />)}
@@ -257,7 +356,7 @@ export default async function ScriptsPage() {
       {byStatus.other.length > 0 && (
         <section className="mb-8">
           <h2 className="text-sm font-semibold text-purple-400 uppercase tracking-wider mb-3">
-            Outros ({byStatus.other.length})
+            Em produção ({byStatus.other.length})
           </h2>
           <div className="space-y-4">
             {byStatus.other.map(s => <ScriptCard key={s.id} script={s} />)}
