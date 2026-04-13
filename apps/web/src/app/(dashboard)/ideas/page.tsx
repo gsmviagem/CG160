@@ -1,9 +1,6 @@
-// ============================================================
-// CG 160 — Ideas Page
-// ============================================================
-
 import { getDB } from '@/lib/supabase';
 import { formatScore, scoreColor, statusBadgeColor, relativeTime } from '@/lib/utils';
+import { ApprovalButton, GenerateButton } from '@/components/ActionButton';
 import type { Idea } from '@cg160/types';
 
 export const revalidate = 0;
@@ -17,68 +14,6 @@ async function getAllIdeas() {
     db.getIdeasByStatus('rejected', 20),
   ]);
   return { pending, approved, scripted, rejected };
-}
-
-function GenerateIdeasButton() {
-  return (
-    <form action="/api/generate" method="POST">
-      <input type="hidden" name="type" value="ideas" />
-      <input type="hidden" name="count" value="5" />
-      <button
-        type="submit"
-        className="text-sm px-4 py-2 bg-indigo-700 hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors"
-      >
-        + Gerar Ideias
-      </button>
-    </form>
-  );
-}
-
-function GenerateScriptButton({ ideaId }: { ideaId: string }) {
-  return (
-    <form action="/api/generate" method="POST" className="inline">
-      <input type="hidden" name="type" value="script" />
-      <input type="hidden" name="idea_id" value={ideaId} />
-      <button
-        type="submit"
-        className="text-xs px-3 py-1.5 bg-blue-800 hover:bg-blue-700 text-blue-100 rounded font-medium transition-colors"
-      >
-        Gerar Script
-      </button>
-    </form>
-  );
-}
-
-function ApproveButton({ ideaId }: { ideaId: string }) {
-  return (
-    <form action="/api/approval" method="POST" className="inline">
-      <input type="hidden" name="entity_type" value="idea" />
-      <input type="hidden" name="entity_id" value={ideaId} />
-      <input type="hidden" name="action" value="approved" />
-      <button
-        type="submit"
-        className="text-xs px-3 py-1.5 bg-green-800 hover:bg-green-700 text-green-100 rounded font-medium transition-colors"
-      >
-        Aprovar
-      </button>
-    </form>
-  );
-}
-
-function RejectButton({ ideaId }: { ideaId: string }) {
-  return (
-    <form action="/api/approval" method="POST" className="inline">
-      <input type="hidden" name="entity_type" value="idea" />
-      <input type="hidden" name="entity_id" value={ideaId} />
-      <input type="hidden" name="action" value="rejected" />
-      <button
-        type="submit"
-        className="text-xs px-3 py-1.5 bg-red-900 hover:bg-red-800 text-red-100 rounded font-medium transition-colors"
-      >
-        Rejeitar
-      </button>
-    </form>
-  );
 }
 
 function IdeaRow({ idea, showActions = false, showScriptBtn = false }: {
@@ -116,16 +51,17 @@ function IdeaRow({ idea, showActions = false, showScriptBtn = false }: {
             <p className="text-xs text-red-400 mt-1">Motivo: {idea.rejection_reason}</p>
           )}
 
-          {/* Action buttons */}
           {(showActions || showScriptBtn) && (
             <div className="flex gap-2 mt-3 flex-wrap">
               {showActions && (
                 <>
-                  <ApproveButton ideaId={idea.id} />
-                  <RejectButton ideaId={idea.id} />
+                  <ApprovalButton entityType="idea" entityId={idea.id} action="approved" label="Aprovar" variant="success" />
+                  <ApprovalButton entityType="idea" entityId={idea.id} action="rejected" label="Rejeitar" variant="danger" />
                 </>
               )}
-              {showScriptBtn && <GenerateScriptButton ideaId={idea.id} />}
+              {showScriptBtn && (
+                <GenerateButton type="script" ideaId={idea.id} label="Gerar Script" variant="primary" className="text-xs px-3 py-1.5 text-sm" />
+              )}
             </div>
           )}
         </div>
@@ -163,13 +99,12 @@ export default async function IdeasPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-white">Ideias</h1>
           <p className="text-gray-500 mt-1 text-sm">{total} ideias no total</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <div className="flex gap-4 text-sm">
             <div className="text-center">
               <div className="text-yellow-400 font-bold text-lg">{pending.length}</div>
@@ -184,44 +119,38 @@ export default async function IdeasPage() {
               <div className="text-gray-600 text-xs">Com Script</div>
             </div>
           </div>
-          <GenerateIdeasButton />
+          <GenerateButton type="ideas" count={5} label="+ Gerar Ideias" variant="primary" />
         </div>
       </div>
 
-      {/* Pending — show approve/reject buttons */}
+      {/* Pending */}
       <section className="mb-8">
         <SectionHeader label="Pendentes" count={pending.length} color="text-yellow-400" />
         {pending.length === 0
           ? <EmptyState label="pendente" />
           : <div className="space-y-3">
-              {pending.map(idea => (
-                <IdeaRow key={idea.id} idea={idea} showActions />
-              ))}
+              {pending.map(idea => <IdeaRow key={idea.id} idea={idea} showActions />)}
             </div>
         }
       </section>
 
-      {/* Approved — show Generate Script button */}
+      {/* Approved — waiting for script */}
       <section className="mb-8">
         <SectionHeader label="Aprovadas — aguardando script" count={approved.length} color="text-green-400" />
         {approved.length === 0
           ? <EmptyState label="aprovada aguardando script" />
           : <div className="space-y-3">
-              {approved.map(idea => (
-                <IdeaRow key={idea.id} idea={idea} showScriptBtn />
-              ))}
+              {approved.map(idea => <IdeaRow key={idea.id} idea={idea} showScriptBtn />)}
             </div>
         }
       </section>
 
-      {/* Scripted — script already generated */}
+      {/* Scripted */}
       {scripted.length > 0 && (
         <section className="mb-8">
           <SectionHeader label="Script gerado" count={scripted.length} color="text-blue-400" />
           <div className="space-y-3">
-            {scripted.map(idea => (
-              <IdeaRow key={idea.id} idea={idea} showScriptBtn />
-            ))}
+            {scripted.map(idea => <IdeaRow key={idea.id} idea={idea} showScriptBtn />)}
           </div>
         </section>
       )}
@@ -231,9 +160,7 @@ export default async function IdeasPage() {
         <section className="mb-8">
           <SectionHeader label="Rejeitadas" count={rejected.length} color="text-red-400" />
           <div className="space-y-3">
-            {rejected.map(idea => (
-              <IdeaRow key={idea.id} idea={idea} />
-            ))}
+            {rejected.map(idea => <IdeaRow key={idea.id} idea={idea} />)}
           </div>
         </section>
       )}
