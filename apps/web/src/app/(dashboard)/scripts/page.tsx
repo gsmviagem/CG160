@@ -186,6 +186,13 @@ function ScriptCard({ script }: { script: Script }) {
               />
             </div>
           )}
+          {/* Image confirmation for approved scripts */}
+          {script.status === 'approved' && (
+            <ApprovalButton
+              entityType="script" entityId={script.id}
+              action="images_ready" label="📸 Imagens prontas" variant="neutral"
+            />
+          )}
           <div className="text-right">
             <div className={`text-2xl font-bold ${scoreColor(script.total_score)}`}>
               {script.total_score?.toFixed(1) ?? '—'}
@@ -306,10 +313,11 @@ function ScriptCard({ script }: { script: Script }) {
 export default async function ScriptsPage() {
   const scripts = await getScripts();
   const byStatus = {
-    pending:  scripts.filter(s => s.status === 'pending'),
-    approved: scripts.filter(s => s.status === 'approved'),
-    rejected: scripts.filter(s => s.status === 'rejected'),
-    other:    scripts.filter(s => !['pending', 'approved', 'rejected'].includes(s.status)),
+    pending:       scripts.filter(s => s.status === 'pending'),
+    approved:      scripts.filter(s => s.status === 'approved'),
+    images_ready:  scripts.filter(s => s.status === 'images_ready'),
+    rejected:      scripts.filter(s => s.status === 'rejected'),
+    other:         scripts.filter(s => !['pending', 'approved', 'images_ready', 'rejected'].includes(s.status)),
   };
 
   return (
@@ -349,6 +357,17 @@ export default async function ScriptsPage() {
           </h2>
           <div className="space-y-4">
             {byStatus.approved.map(s => <ScriptCard key={s.id} script={s} />)}
+          </div>
+        </section>
+      )}
+
+      {byStatus.images_ready.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-amber-400 uppercase tracking-wider mb-3">
+            Imagens prontas — aguardando aprovação ({byStatus.images_ready.length})
+          </h2>
+          <div className="space-y-4">
+            {byStatus.images_ready.map(s => <ScriptCard key={s.id} script={s} />)}
           </div>
         </section>
       )}

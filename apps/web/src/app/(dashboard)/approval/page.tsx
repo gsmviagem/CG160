@@ -7,12 +7,13 @@ export const revalidate = 0;
 
 async function getApprovalQueue() {
   const db = getDB();
-  const [ideas, scripts, videos] = await Promise.all([
+  const [ideas, scripts, imagesReady, videos] = await Promise.all([
     db.getIdeasByStatus('pending', 20),
     db.getScriptsByStatus('pending', 20),
+    db.getScriptsByStatus('images_ready', 20),
     db.getVideosByStatus('ready', 20),
   ]);
-  return { ideas, scripts, videos };
+  return { ideas, scripts, imagesReady, videos };
 }
 
 function IdeaCard({ idea }: { idea: Idea }) {
@@ -95,6 +96,36 @@ function ScriptCard({ script }: { script: Script }) {
   );
 }
 
+function ImageReviewCard({ script }: { script: Script }) {
+  const scenes = Array.isArray(script.scenes) ? script.scenes : [];
+  const sid = script.id.replace(/-/g, '').slice(0, 8);
+  return (
+    <div className="bg-gray-900 border border-amber-900/50 rounded-lg p-4 hover:border-amber-700/50 transition-colors">
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div>
+          <span className="text-xs text-amber-500 uppercase tracking-wider">Imagens · {scenes.length} cenas</span>
+          <h3 className="text-sm font-semibold text-white mt-0.5">{script.title}</h3>
+        </div>
+        <span className="text-xs text-gray-600 flex-shrink-0">{sid}</span>
+      </div>
+      <div className="flex flex-wrap gap-1 mb-3">
+        {scenes.map(s => (
+          <code key={s.scene_number} className="text-xs text-amber-400 bg-gray-800 px-2 py-0.5 rounded font-mono">
+            {sid}_cena{s.scene_number}.jpg
+          </code>
+        ))}
+      </div>
+      <p className="text-xs text-gray-500 mb-3">
+        Bucket: <code className="text-gray-400">cg160-media/cenas/{sid}/</code>
+      </p>
+      <div className="flex gap-2">
+        <ApprovalButton entityType="script" entityId={script.id} action="images_approved" label="Aprovar imagens" variant="success" />
+        <ApprovalButton entityType="script" entityId={script.id} action="images_rejected" label="Rejeitar" variant="danger" />
+      </div>
+    </div>
+  );
+}
+
 function VideoCard({ video }: { video: Video }) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-gray-700 transition-colors">
@@ -135,8 +166,8 @@ function VideoCard({ video }: { video: Video }) {
 }
 
 export default async function ApprovalPage() {
-  const { ideas, scripts, videos } = await getApprovalQueue();
-  const total = ideas.length + scripts.length + videos.length;
+  const { ideas, scripts, imagesReady, videos } = await getApprovalQueue();
+  const total = ideas.length + scripts.length + imagesReady.length + videos.length;
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -162,6 +193,17 @@ export default async function ApprovalPage() {
           </h2>
           <div className="space-y-3">
             {videos.map(video => <VideoCard key={video.id} video={video} />)}
+          </div>
+        </section>
+      )}
+
+      {imagesReady.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-amber-400 uppercase tracking-wider mb-3">
+            Imagens das cenas ({imagesReady.length})
+          </h2>
+          <div className="space-y-3">
+            {imagesReady.map(script => <ImageReviewCard key={script.id} script={script} />)}
           </div>
         </section>
       )}

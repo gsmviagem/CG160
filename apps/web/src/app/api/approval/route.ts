@@ -75,8 +75,8 @@ export async function POST(request: NextRequest) {
         await db.updateScriptStatus(entity_id, 'approved', {
           approved_at: new Date().toISOString(),
         });
-        // For now scripts go to "approved" — video generation is manual (Veo 3)
-        // When video API is enabled: await sendEvent('cg160/videos.generate', { script_id: entity_id, platform: 'tiktok' });
+        // Script approved → user creates scene images manually
+        // Next step: mark images_ready when images are uploaded
         break;
       }
 
@@ -85,6 +85,25 @@ export async function POST(request: NextRequest) {
           rejection_reason: reason ?? 'Rejected by operator',
           rejected_at: new Date().toISOString(),
         });
+        break;
+
+      // ── IMAGE APPROVAL STEPS ──────────────────────────────────
+
+      case 'script:images_ready':
+        // User confirms they've uploaded the scene images → send to image approval queue
+        await db.updateScriptStatus(entity_id, 'images_ready');
+        break;
+
+      case 'script:images_approved':
+        // Images approved → user now creates the video by animating the images
+        await db.updateScriptStatus(entity_id, 'generating_video');
+        // When image-to-video API is enabled:
+        // await sendEvent('cg160/videos.generate', { script_id: entity_id, platform: 'tiktok' });
+        break;
+
+      case 'script:images_rejected':
+        // Images rejected → back to "approved" so user creates new images
+        await db.updateScriptStatus(entity_id, 'approved');
         break;
 
       case 'script:regenerate_requested': {

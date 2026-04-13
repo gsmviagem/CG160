@@ -8,7 +8,7 @@ export type Platform = 'tiktok' | 'instagram';
 export type VideoProvider = 'runway' | 'kling' | 'luma';
 
 export type IdeaStatus = 'pending' | 'approved' | 'rejected' | 'scripting' | 'scripted';
-export type ScriptStatus = 'pending' | 'approved' | 'rejected' | 'generating_video' | 'video_ready';
+export type ScriptStatus = 'pending' | 'approved' | 'rejected' | 'images_ready' | 'generating_video' | 'video_ready';
 export type VideoStatus = 'generating' | 'ready' | 'approved' | 'rejected' | 'scheduled' | 'publishing' | 'published' | 'failed';
 export type PublishStatus = 'pending' | 'published' | 'failed' | 'cancelled';
 

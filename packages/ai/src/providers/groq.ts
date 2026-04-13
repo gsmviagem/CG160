@@ -16,11 +16,19 @@ const FALLBACK_MODELS: Record<string, string[]> = {
   'llama-3.1-8b-instant':    ['gemma2-9b-it'],
 };
 
-async function groqFetch(body: object & { model?: string }): Promise<string> {
+interface GroqRequestBody {
+  model?: string;
+  messages: Array<{ role: string; content: string }>;
+  temperature?: number;
+  max_tokens?: number;
+  [key: string]: unknown;
+}
+
+async function groqFetch(body: GroqRequestBody): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error('GROQ_API_KEY is not set');
 
-  const primaryModel = (body as { model?: string }).model ?? 'llama-3.3-70b-versatile';
+  const primaryModel = body.model ?? 'llama-3.3-70b-versatile';
   const modelsToTry = [primaryModel, ...(FALLBACK_MODELS[primaryModel] ?? [])];
 
   let lastError = '';
