@@ -1,16 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/generate-ideas",
-      "schedule": "0 */6 * * *"
-    },
-    {
-      "path": "/api/cron/sync-metrics",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/run-learning-loop",
-      "schedule": "0 3 * * *"
+      "path": "/api/cron/daily",
+      "schedule": "0 9 * * *"
     }
   ]
 }
