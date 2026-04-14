@@ -7,27 +7,19 @@ import { setGenerating } from '@/components/GeneratingBanner';
 type Variant = 'success' | 'danger' | 'neutral' | 'primary';
 
 const COLORS: Record<Variant, string> = {
-  success: 'bg-green-800 hover:bg-green-700 text-green-100 disabled:bg-green-900 disabled:text-green-700',
-  danger:  'bg-red-900 hover:bg-red-800 text-red-100 disabled:bg-red-950 disabled:text-red-800',
-  neutral: 'bg-gray-800 hover:bg-gray-700 text-gray-300 disabled:bg-gray-900 disabled:text-gray-600',
-  primary: 'bg-indigo-700 hover:bg-indigo-600 text-white disabled:bg-indigo-900 disabled:text-indigo-700',
+  success: 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 disabled:opacity-30',
+  danger:  'bg-red-500/15 hover:bg-red-500/25 text-red-300 disabled:opacity-30',
+  neutral: 'bg-white/[0.06] hover:bg-white/[0.10] text-white/60 hover:text-white/80 disabled:opacity-30',
+  primary: 'bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 hover:text-indigo-200 disabled:opacity-30',
 };
 
-// ─── Approval Button ───────────────────────────────────────────────────────────
-// POST /api/approval — approve, reject or regenerate an idea/script/video
-
-interface ApprovalButtonProps {
-  entityType: string;
-  entityId: string;
-  action: string;
-  label: string;
-  variant: Variant;
-  redirectTo?: string;
-}
-
+// ─── Approval Button ────────────────────────────────────────────────────────
 export function ApprovalButton({
   entityType, entityId, action, label, variant, redirectTo,
-}: ApprovalButtonProps) {
+}: {
+  entityType: string; entityId: string; action: string;
+  label: string; variant: Variant; redirectTo?: string;
+}) {
   const router = useRouter();
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
 
@@ -41,148 +33,104 @@ export function ApprovalButton({
       });
       if (!res.ok) throw new Error(await res.text());
       setState('done');
-      // Refresh current page data after short delay so user sees the "done" flash
-      setTimeout(() => {
-        router.refresh();
-        setState('idle');
-      }, 800);
+      setTimeout(() => { router.refresh(); setState('idle'); }, 800);
       if (redirectTo) router.push(redirectTo);
-    } catch (err) {
-      console.error('ApprovalButton error:', err);
+    } catch {
       setState('error');
       setTimeout(() => setState('idle'), 2000);
     }
   }
 
-  const isLoading = state === 'loading';
-  const isDone    = state === 'done';
-  const isError   = state === 'error';
-
-  const displayLabel = isLoading ? '...' : isDone ? '✓' : isError ? '✗' : label;
-  const extraColor   = isDone ? 'bg-green-700 text-green-100' : isError ? 'bg-red-700 text-red-100' : '';
+  const display = state === 'loading' ? '…' : state === 'done' ? '✓' : state === 'error' ? '✗' : label;
+  const extra   = state === 'done'  ? 'bg-emerald-500/20 text-emerald-300'
+                : state === 'error' ? 'bg-red-500/20 text-red-300' : '';
 
   return (
     <button
       onClick={handleClick}
-      disabled={isLoading || isDone}
-      className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${extraColor || COLORS[variant]}`}
+      disabled={state === 'loading' || state === 'done'}
+      className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all duration-200 ${extra || COLORS[variant]}`}
     >
-      {displayLabel}
+      {display}
     </button>
   );
 }
 
-// ─── Generate Button ───────────────────────────────────────────────────────────
-// POST /api/generate — trigger idea or script generation
-
-interface GenerateButtonProps {
-  type: 'ideas' | 'script';
-  ideaId?: string;
-  count?: number;
-  label: string;
-  variant?: Variant;
-  className?: string;
-  currentCount?: number; // passed so banner knows when new items appear
-}
-
+// ─── Generate Button ────────────────────────────────────────────────────────
 export function GenerateButton({
   type, ideaId, count = 5, label, variant = 'primary', className = '', currentCount = 0,
-}: GenerateButtonProps) {
+}: {
+  type: 'ideas' | 'script'; ideaId?: string; count?: number;
+  label: string; variant?: Variant; className?: string; currentCount?: number;
+}) {
   const router = useRouter();
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
   async function handleClick() {
-    setState('loading');
-    setErrorMsg('');
+    setState('loading'); setErrorMsg('');
     try {
       const body: Record<string, unknown> = { type };
       if (type === 'ideas') body.count = count;
       if (type === 'script' && ideaId) body.idea_id = ideaId;
-
       const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: res.statusText }));
-        const msg = data.detail ?? data.error ?? res.statusText;
-        throw new Error(msg);
+        throw new Error(data.detail ?? data.error ?? res.statusText);
       }
-      // Activate the GeneratingBanner so user can see progress
       setGenerating(type, currentCount);
       setState('done');
-      // For script generation, redirect to scripts page so the banner
-      // monitors the correct count and the new script is visible on arrival
-      if (type === 'script') {
-        setTimeout(() => router.push('/scripts'), 1200);
-      } else {
-        setTimeout(() => setState('idle'), 1200);
-      }
+      if (type === 'script') setTimeout(() => router.push('/scripts'), 1200);
+      else setTimeout(() => setState('idle'), 1200);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error('GenerateButton error:', msg);
       setErrorMsg(msg);
       setState('error');
       setTimeout(() => { setState('idle'); setErrorMsg(''); }, 6000);
     }
   }
 
-  const isLoading = state === 'loading';
-  const isDone    = state === 'done';
-  const isError   = state === 'error';
-
-  const displayLabel = isLoading
-    ? 'Iniciando...'
-    : isDone
-    ? '✓ Job enviado!'
-    : isError
-    ? '✗ Falhou'
-    : label;
-
-  const extraColor = isDone
-    ? 'bg-green-700 text-green-100'
-    : isError
-    ? 'bg-red-800 text-red-100'
-    : '';
+  const display = state === 'loading' ? 'Iniciando…'
+                : state === 'done'    ? '✓ Enviado!'
+                : state === 'error'   ? '✗ Falhou'
+                : label;
+  const extra   = state === 'done'  ? 'bg-emerald-500/20 text-emerald-300'
+                : state === 'error' ? 'bg-red-500/20 text-red-300' : '';
 
   return (
     <div className="inline-flex flex-col gap-1">
       <button
         onClick={handleClick}
-        disabled={isLoading || isDone}
-        className={`text-sm px-4 py-2 rounded-lg font-medium transition-all ${extraColor || COLORS[variant]} ${className}`}
+        disabled={state === 'loading' || state === 'done'}
+        className={`text-sm px-4 py-2 rounded-xl font-medium transition-all duration-200 ${extra || COLORS[variant]} ${className}`}
       >
-        {displayLabel}
+        {display}
       </button>
-      {isError && errorMsg && (
-        <span className="text-xs text-red-400 max-w-xs break-words">{errorMsg}</span>
+      {state === 'error' && errorMsg && (
+        <span className="text-xs text-red-400/80 max-w-xs break-words">{errorMsg}</span>
       )}
     </div>
   );
 }
 
-// ─── Generate Ideas Box ────────────────────────────────────────────────────────
-// Input de tema + botão de geração de ideias
-
+// ─── Generate Ideas Box ─────────────────────────────────────────────────────
 export function GenerateIdeasBox({ currentCount = 0 }: { currentCount?: number }) {
   const router = useRouter();
-  const [theme, setTheme] = useState('');
-  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [theme, setTheme]   = useState('');
+  const [state, setState]   = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setState('loading');
-    setErrorMsg('');
+    setState('loading'); setErrorMsg('');
     try {
       const body: Record<string, unknown> = { type: 'ideas', count: 5 };
       if (theme.trim()) body.theme = theme.trim();
-
       const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!res.ok) {
@@ -190,13 +138,11 @@ export function GenerateIdeasBox({ currentCount = 0 }: { currentCount?: number }
         throw new Error(data.detail ?? data.error ?? res.statusText);
       }
       setGenerating('ideas', currentCount);
-      setState('done');
-      setTheme('');
+      setState('done'); setTheme('');
       setTimeout(() => { setState('idle'); router.refresh(); }, 1500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      setErrorMsg(msg);
-      setState('error');
+      setErrorMsg(msg); setState('error');
       setTimeout(() => { setState('idle'); setErrorMsg(''); }, 6000);
     }
   }
@@ -205,7 +151,7 @@ export function GenerateIdeasBox({ currentCount = 0 }: { currentCount?: number }
   const isDone    = state === 'done';
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full max-w-lg">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full">
       <div className="flex gap-2">
         <input
           type="text"
@@ -213,31 +159,35 @@ export function GenerateIdeasBox({ currentCount = 0 }: { currentCount?: number }
           onChange={e => setTheme(e.target.value)}
           placeholder="Tema (opcional) — ex: frutinhas com corpo humano"
           disabled={isLoading || isDone}
-          className="flex-1 text-sm px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+          className="
+            flex-1 text-sm px-4 py-2.5 rounded-xl
+            bg-white/[0.05] hover:bg-white/[0.07] focus:bg-white/[0.07]
+            text-white placeholder-white/25
+            focus:outline-none focus:ring-1 focus:ring-indigo-500/30
+            transition-all duration-200 disabled:opacity-40
+          "
         />
         <button
           type="submit"
           disabled={isLoading || isDone}
-          className={`text-sm px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
-            isDone
-              ? 'bg-green-700 text-green-100'
-              : state === 'error'
-              ? 'bg-red-800 text-red-100'
-              : 'bg-indigo-700 hover:bg-indigo-600 text-white disabled:bg-indigo-900 disabled:text-indigo-700'
-          }`}
+          className={`
+            text-sm px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 whitespace-nowrap
+            ${isDone        ? 'bg-emerald-500/20 text-emerald-300'
+            : state === 'error' ? 'bg-red-500/20 text-red-300'
+            : 'bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 disabled:opacity-40'}
+          `}
         >
-          {isLoading ? 'Gerando...' : isDone ? '✓ Enviado!' : '+ Gerar 5 ideias'}
+          {isLoading ? 'Gerando…' : isDone ? '✓ Enviado!' : '+ Gerar 5 ideias'}
         </button>
       </div>
       {state === 'error' && errorMsg && (
-        <span className="text-xs text-red-400">{errorMsg}</span>
+        <span className="text-xs text-red-400/80">{errorMsg}</span>
       )}
     </form>
   );
 }
 
-// ─── Delete Button ─────────────────────────────────────────────────────────────
-
+// ─── Delete Button ──────────────────────────────────────────────────────────
 export function DeleteButton({ type, id }: { type: 'idea' | 'script'; id: string }) {
   const router = useRouter();
   const [state, setState] = useState<'idle' | 'confirm' | 'loading' | 'done'>('idle');
@@ -245,25 +195,23 @@ export function DeleteButton({ type, id }: { type: 'idea' | 'script'; id: string
   if (state === 'confirm') {
     return (
       <span className="inline-flex items-center gap-1">
-        <span className="text-xs text-gray-400">Confirmar?</span>
+        <span className="text-xs text-white/30">Confirmar?</span>
         <button
           onClick={async () => {
             setState('loading');
             await fetch('/api/delete', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ type, id }),
             });
-            setState('done');
-            router.refresh();
+            setState('done'); router.refresh();
           }}
-          className="text-xs px-2 py-1 bg-red-700 hover:bg-red-600 text-white rounded transition-colors"
+          className="text-xs px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition-colors"
         >
           Sim
         </button>
         <button
           onClick={() => setState('idle')}
-          className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
+          className="text-xs px-2 py-1 bg-white/[0.06] hover:bg-white/[0.10] text-white/40 rounded-lg transition-colors"
         >
           Não
         </button>
@@ -275,9 +223,9 @@ export function DeleteButton({ type, id }: { type: 'idea' | 'script'; id: string
     <button
       onClick={() => setState('confirm')}
       disabled={state === 'loading' || state === 'done'}
-      className="text-xs px-2 py-1 bg-gray-800 hover:bg-red-900 text-gray-500 hover:text-red-300 rounded transition-colors"
+      className="text-xs px-2 py-1 bg-white/[0.04] hover:bg-red-500/15 text-white/20 hover:text-red-400 rounded-lg transition-all duration-200"
     >
-      {state === 'loading' ? '...' : state === 'done' ? '✓' : 'Deletar'}
+      {state === 'loading' ? '…' : state === 'done' ? '✓' : 'Deletar'}
     </button>
   );
 }

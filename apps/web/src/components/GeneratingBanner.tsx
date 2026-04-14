@@ -16,8 +16,7 @@ interface GeneratingState {
 
 export function setGenerating(type: 'ideas' | 'script', currentCount = 0) {
   const state: GeneratingState = {
-    type,
-    startedAt: Date.now(),
+    type, startedAt: Date.now(),
     label: type === 'ideas' ? 'Gerando novas ideias' : 'Gerando script',
     initialCount: currentCount,
   };
@@ -30,12 +29,7 @@ export function clearGenerating() {
   window.dispatchEvent(new Event('cg160:generating'));
 }
 
-interface GeneratingBannerProps {
-  // Current item count from server — when it exceeds initialCount, banner auto-dismisses
-  itemCount?: number;
-}
-
-export function GeneratingBanner({ itemCount = 0 }: GeneratingBannerProps) {
+export function GeneratingBanner({ itemCount = 0 }: { itemCount?: number }) {
   const router = useRouter();
   const [state, setState] = useState<GeneratingState | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -47,38 +41,28 @@ export function GeneratingBanner({ itemCount = 0 }: GeneratingBannerProps) {
       if (!raw) { setState(null); return; }
       const parsed = JSON.parse(raw) as GeneratingState;
       if (Date.now() - parsed.startedAt > MAX_MS) {
-        localStorage.removeItem(STORAGE_KEY);
-        setState(null);
-        return;
+        localStorage.removeItem(STORAGE_KEY); setState(null); return;
       }
       setState(parsed);
-    } catch {
-      setState(null);
-    }
+    } catch { setState(null); }
   }, []);
 
-  // Read state on mount and on custom event
   useEffect(() => {
     readState();
     window.addEventListener('cg160:generating', readState);
     return () => window.removeEventListener('cg160:generating', readState);
   }, [readState]);
 
-  // Auto-dismiss when itemCount increases (new content arrived)
   useEffect(() => {
     if (!state) return;
-    if (itemCount > state.initialCount && itemCount > prevCountRef.current) {
-      clearGenerating();
-    }
+    if (itemCount > state.initialCount && itemCount > prevCountRef.current) clearGenerating();
     prevCountRef.current = itemCount;
   }, [itemCount, state]);
 
-  // Polling + elapsed timer
   useEffect(() => {
     if (!state) return;
     const interval = setInterval(() => {
-      const secs = Math.floor((Date.now() - state.startedAt) / 1000);
-      setElapsed(secs);
+      setElapsed(Math.floor((Date.now() - state.startedAt) / 1000));
       router.refresh();
       if (Date.now() - state.startedAt > MAX_MS) clearGenerating();
     }, POLL_MS);
@@ -94,20 +78,18 @@ export function GeneratingBanner({ itemCount = 0 }: GeneratingBannerProps) {
     `${elapsed}s — pode levar até 2 min`;
 
   return (
-    <div className="flex items-center gap-3 bg-indigo-950 border border-indigo-700 rounded-lg px-4 py-3 mb-5">
-      <span className="relative flex h-3 w-3 flex-shrink-0">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
-        <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500" />
+    <div className="flex items-center gap-3 bg-indigo-500/10 rounded-2xl px-5 py-3.5 mb-6"
+      style={{ boxShadow: 'inset 0 0 0 1px rgba(99,102,241,0.15)' }}>
+      <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-60" />
+        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500" />
       </span>
       <div className="flex-1 min-w-0">
-        <span className="text-sm text-indigo-200 font-medium">{state.label}… </span>
-        <span className="text-xs text-indigo-400">{statusText}</span>
+        <span className="text-sm text-white/80 font-medium">{state.label}… </span>
+        <span className="text-xs text-indigo-400/70">{statusText}</span>
       </div>
-      <button
-        onClick={clearGenerating}
-        className="text-indigo-500 hover:text-indigo-300 text-xs transition-colors flex-shrink-0"
-      >
-        dispensar ×
+      <button onClick={clearGenerating} className="text-white/20 hover:text-white/50 text-xs transition-colors">
+        ×
       </button>
     </div>
   );
