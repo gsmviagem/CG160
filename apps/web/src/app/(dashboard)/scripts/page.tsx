@@ -172,10 +172,12 @@ function FileManifestBlock({ script, sceneCount }: { script: Script; sceneCount:
 }
 
 function ScriptCard({ script }: { script: Script }) {
-  const metadata = script.metadata as Record<string, string>;
-  const characterProfile = metadata?.character_visual_bible ?? '';
-  const audioDirection   = metadata?.audio_direction ?? '';
-  const productionNotes  = metadata?.production_notes ?? '';
+  const metadata = script.metadata as Record<string, unknown>;
+  const safeStr = (v: unknown): string =>
+    typeof v === 'string' ? v : v ? JSON.stringify(v) : '';
+  const characterProfile = safeStr(metadata?.character_visual_bible);
+  const audioDirection   = safeStr(metadata?.audio_direction);
+  const productionNotes  = safeStr(metadata?.production_notes);
   const scenes = Array.isArray(script.scenes) ? script.scenes : [];
 
   return (
@@ -298,10 +300,10 @@ function ScriptCard({ script }: { script: Script }) {
       )}
 
       {/* Notas de Produção */}
-      {metadata?.production_notes && (
+      {productionNotes && (
         <div className="px-4 py-3 border-b border-gray-800">
           <div className="text-xs text-orange-400 font-medium mb-2">NOTAS DE PRODUÇÃO</div>
-          <p className="text-sm text-gray-300">{metadata.production_notes}</p>
+          <p className="text-sm text-gray-300">{productionNotes}</p>
         </div>
       )}
 
