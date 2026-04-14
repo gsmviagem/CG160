@@ -97,7 +97,7 @@ function buildIdeaGenerationPrompt(ctx: IdeaGenerationContext): string {
   return `You are a creative director and viral content strategist for CG 160, an AI-native content studio.
 
 IMPORTANT: Write ALL output in Brazilian Portuguese (pt-BR). Titles, concepts, hooks, rationales — everything in pt-BR.
-
+${operatorSection}
 Your task: Generate ${ctx.count} original short-form video ideas optimized for TikTok and Instagram Reels.
 
 ## Available Characters
@@ -108,7 +108,7 @@ ${trendList}
 
 ## High-Weight Content Patterns (prioritize these)
 ${topPatterns}
-${themeSection}${operatorSection}${performanceContext}
+${themeSection}${performanceContext}
 ## Recent Ideas (AVOID similar concepts — be novel)
 ${recentIdeas}
 
