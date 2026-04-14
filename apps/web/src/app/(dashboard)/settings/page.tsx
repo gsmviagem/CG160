@@ -25,11 +25,6 @@ export default async function SettingsPage() {
           settingKey="idea_instructions"
           label="Instruções para Ideias"
           description="Incluído no prompt de geração de ideias. Afeta conceitos, temas e direção criativa."
-          placeholder={`Exemplos:
-- Frutas com corpo humano DEVEM ter corpo humano real, proporcional — não cartoon nem vegetal deformado
-- Evitar conceitos com animais a menos que seja o tema principal
-- Priorizar personagens femininos em situações cotidianas absurdas
-- Sempre incluir um elemento de surpresa no hook`}
           initialValue={ideaInstructions}
           accentColor="yellow"
         />
@@ -38,11 +33,6 @@ export default async function SettingsPage() {
           settingKey="script_instructions"
           label="Instruções para Scripts"
           description="Incluído no prompt de geração de scripts. Afeta visual, diálogo, direção de cena e produção."
-          placeholder={`Exemplos:
-- Personagens de frutas com corpo humano: mostrar corpo inteiro em pelo menos 1 cena
-- Iluminação preferencial: luz natural de janela lateral, sombras suaves
-- Diálogos em pt-BR informal, sem gírias muito regionais
-- Cada cena deve ter movimento de câmera diferente da anterior`}
           initialValue={scriptInstructions}
           accentColor="green"
         />
