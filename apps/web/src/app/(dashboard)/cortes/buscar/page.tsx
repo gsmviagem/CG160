@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 export default function BuscarVideos() {
-  const [url, setUrl] = useState('');
+  const [url, setUrl]       = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -12,7 +12,7 @@ export default function BuscarVideos() {
     setStatus('loading');
     setErrorMsg('');
     try {
-      const res = await fetch('/api/cortes/import', {
+      const res  = await fetch('/api/cortes/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: url.trim() }),
@@ -30,68 +30,98 @@ export default function BuscarVideos() {
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-red-200">Buscar Vídeos</h1>
-        <p className="text-red-900/80 mt-1 text-sm">
-          Cole uma URL do YouTube, TikTok ou Instagram para importar o vídeo.
+    <div className="p-8 max-w-2xl mx-auto">
+
+      {/* Header */}
+      <div className="mb-10">
+        <h1 className="text-3xl font-bold text-white tracking-tight">Buscar Vídeos</h1>
+        <p className="text-white/30 mt-1.5 text-sm">
+          Cole uma URL ou faça upload direto para importar um vídeo.
         </p>
       </div>
 
       {/* URL import */}
-      <div className="border border-red-950 rounded-lg overflow-hidden mb-6">
-        <div className="px-4 py-3 bg-red-950/20 border-b border-red-950">
-          <div className="text-xs font-bold uppercase tracking-wider text-red-500">Importar por URL</div>
-        </div>
-        <div className="p-4 bg-[#0f0303] space-y-3">
+      <div className="mb-6">
+        <label className="text-xs text-white/30 font-semibold uppercase tracking-widest mb-3 block">
+          Importar por URL
+        </label>
+        <div className="flex gap-2">
           <input
             type="url"
             value={url}
             onChange={e => setUrl(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleImport()}
             placeholder="https://youtube.com/watch?v=..."
-            className="w-full bg-red-950/20 border border-red-950 rounded-lg px-3 py-2 text-sm text-red-200 placeholder-red-900 focus:outline-none focus:border-red-700"
+            className="
+              flex-1 bg-white/[0.05] hover:bg-white/[0.07] focus:bg-white/[0.07]
+              rounded-xl px-4 py-3 text-sm text-white placeholder-white/20
+              focus:outline-none focus:ring-1 focus:ring-red-500/40
+              transition-all duration-200
+            "
           />
-          <div className="flex items-center justify-between">
-            {status === 'error' && errorMsg
-              ? <span className="text-xs text-red-400">{errorMsg}</span>
-              : status === 'done'
-              ? <span className="text-xs text-green-400">Vídeo importado com sucesso</span>
-              : <span className="text-xs text-red-900">Suporta YouTube, TikTok e Instagram</span>
-            }
-            <button
-              onClick={handleImport}
-              disabled={status === 'loading' || !url.trim()}
-              className="text-sm px-4 py-1.5 rounded bg-red-900 hover:bg-red-800 disabled:bg-red-950 disabled:text-red-900 text-red-200 transition-colors font-medium"
-            >
-              {status === 'loading' ? 'Importando...' : 'Importar'}
-            </button>
-          </div>
+          <button
+            onClick={handleImport}
+            disabled={status === 'loading' || !url.trim()}
+            className="
+              px-5 py-3 rounded-xl text-sm font-semibold
+              bg-red-600/80 hover:bg-red-500/80 disabled:bg-white/[0.05]
+              text-white disabled:text-white/20
+              transition-all duration-200
+            "
+          >
+            {status === 'loading' ? '...' : 'Importar'}
+          </button>
         </div>
+
+        {status === 'error' && errorMsg && (
+          <p className="text-xs text-red-400/80 mt-2">{errorMsg}</p>
+        )}
+        {status === 'done' && (
+          <p className="text-xs text-green-400/80 mt-2">Vídeo importado com sucesso</p>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div className="flex items-center gap-4 my-8">
+        <div className="flex-1 h-px bg-white/[0.05]" />
+        <span className="text-xs text-white/20 font-medium">ou</span>
+        <div className="flex-1 h-px bg-white/[0.05]" />
       </div>
 
       {/* Upload */}
-      <div className="border border-dashed border-red-950 rounded-lg p-8 text-center bg-red-950/5">
-        <div className="text-red-800 text-sm mb-1">Upload direto</div>
-        <div className="text-red-900 text-xs">Arraste um arquivo de vídeo ou clique para selecionar</div>
-        <input type="file" accept="video/*" className="hidden" id="video-upload" />
-        <label
-          htmlFor="video-upload"
-          className="mt-4 inline-block text-xs px-3 py-1.5 rounded border border-red-900 text-red-700 hover:text-red-400 hover:border-red-700 cursor-pointer transition-colors"
-        >
-          Selecionar arquivo
-        </label>
-      </div>
+      <label
+        htmlFor="video-upload"
+        className="
+          flex flex-col items-center justify-center gap-3
+          bg-white/[0.03] hover:bg-white/[0.05] border border-dashed border-white/[0.08] hover:border-red-500/30
+          rounded-2xl p-12 cursor-pointer
+          transition-all duration-200 group
+        "
+      >
+        <div className="w-10 h-10 rounded-2xl bg-white/[0.06] group-hover:bg-red-500/10 flex items-center justify-center transition-colors duration-200">
+          <svg className="w-5 h-5 text-white/30 group-hover:text-red-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+        </div>
+        <div className="text-center">
+          <div className="text-sm font-medium text-white/50 group-hover:text-white/70 transition-colors">Arraste um arquivo de vídeo</div>
+          <div className="text-xs text-white/20 mt-1">MP4, MOV, WebM · máx 2GB</div>
+        </div>
+        <input type="file" id="video-upload" accept="video/*" className="hidden" />
+      </label>
 
-      {/* Plataformas suportadas */}
-      <div className="mt-6 p-4 bg-red-950/10 border border-red-950/50 rounded-lg">
-        <div className="text-xs font-semibold text-red-800 uppercase tracking-wider mb-2">Plataformas suportadas</div>
-        <div className="flex gap-3 flex-wrap">
+      {/* Supported platforms */}
+      <div className="mt-8">
+        <div className="text-xs text-white/20 font-semibold uppercase tracking-widest mb-3">Plataformas suportadas</div>
+        <div className="flex gap-2 flex-wrap">
           {['YouTube', 'TikTok', 'Instagram', 'X / Twitter', 'Upload local'].map(p => (
-            <span key={p} className="text-xs text-red-700 border border-red-950 px-2 py-0.5 rounded">{p}</span>
+            <span key={p} className="text-xs text-white/30 bg-white/[0.04] px-3 py-1.5 rounded-lg">
+              {p}
+            </span>
           ))}
         </div>
       </div>
+
     </div>
   );
 }

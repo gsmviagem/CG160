@@ -1,29 +1,47 @@
-export const revalidate = 0;
+'use client';
+
+import { useState } from 'react';
+
+const PLATFORMS = [
+  { name: 'TikTok',           icon: '◆' },
+  { name: 'Instagram Reels',  icon: '◈' },
+  { name: 'YouTube Shorts',   icon: '▶' },
+];
 
 export default function Publicar() {
+  const [postsPerDay, setPostsPerDay] = useState('2');
+  const [baseTime, setBaseTime]       = useState('18:00');
+
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-red-200">Publicar</h1>
-        <p className="text-red-900/80 mt-1 text-sm">
-          Fila de postagem automática. Configure horários e plataformas alvo.
+    <div className="p-8 max-w-3xl mx-auto">
+
+      <div className="mb-10">
+        <h1 className="text-3xl font-bold text-white tracking-tight">Publicar</h1>
+        <p className="text-white/30 mt-1.5 text-sm">
+          Configure plataformas, horários e postagem automática.
         </p>
       </div>
 
       {/* Platforms */}
-      <div className="border border-red-950 rounded-lg overflow-hidden mb-6">
-        <div className="px-4 py-3 bg-red-950/20 border-b border-red-950">
-          <div className="text-xs font-bold uppercase tracking-wider text-red-500">Plataformas conectadas</div>
+      <div className="mb-8">
+        <div className="text-xs text-white/25 font-semibold uppercase tracking-widest mb-4">
+          Plataformas conectadas
         </div>
-        <div className="p-4 bg-[#0f0303] space-y-2">
-          {[
-            { name: 'TikTok', status: 'disconnected' },
-            { name: 'Instagram Reels', status: 'disconnected' },
-            { name: 'YouTube Shorts', status: 'disconnected' },
-          ].map(p => (
-            <div key={p.name} className="flex items-center justify-between py-2 border-b border-red-950/50 last:border-0">
-              <span className="text-sm text-red-400">{p.name}</span>
-              <button className="text-xs px-3 py-1 rounded border border-red-900 text-red-700 hover:text-red-400 hover:border-red-700 transition-colors">
+        <div className="space-y-2">
+          {PLATFORMS.map(p => (
+            <div
+              key={p.name}
+              className="flex items-center justify-between bg-white/[0.03] hover:bg-white/[0.05] rounded-2xl px-5 py-4 transition-colors duration-200"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-white/20 text-sm">{p.icon}</span>
+                <span className="text-sm font-medium text-white/60">{p.name}</span>
+              </div>
+              <button className="
+                text-xs font-semibold px-4 py-1.5 rounded-lg
+                bg-white/[0.05] hover:bg-red-600/40 text-white/35 hover:text-white
+                transition-all duration-200
+              ">
                 Conectar
               </button>
             </div>
@@ -32,42 +50,61 @@ export default function Publicar() {
       </div>
 
       {/* Schedule */}
-      <div className="border border-red-950 rounded-lg overflow-hidden mb-6">
-        <div className="px-4 py-3 bg-red-950/20 border-b border-red-950">
-          <div className="text-xs font-bold uppercase tracking-wider text-red-500">Agendamento</div>
+      <div className="mb-8">
+        <div className="text-xs text-white/25 font-semibold uppercase tracking-widest mb-4">
+          Agendamento
         </div>
-        <div className="p-4 bg-[#0f0303] space-y-3">
-          <div className="flex items-center gap-3">
-            <label className="text-xs text-red-700 w-32">Posts por dia</label>
-            <select className="bg-red-950/20 border border-red-950 rounded px-3 py-1.5 text-sm text-red-300 focus:outline-none focus:border-red-700">
-              <option>1</option>
-              <option>2</option>
-              <option>3</option>
-              <option>4</option>
-            </select>
+        <div className="bg-white/[0.03] rounded-2xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-white/50">Posts por dia</label>
+            <div className="flex gap-1">
+              {['1','2','3','4'].map(n => (
+                <button
+                  key={n}
+                  onClick={() => setPostsPerDay(n)}
+                  className={`
+                    w-9 h-9 rounded-lg text-sm font-semibold transition-all duration-200
+                    ${postsPerDay === n
+                      ? 'bg-red-600/50 text-white'
+                      : 'bg-white/[0.05] text-white/30 hover:text-white/60'
+                    }
+                  `}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <label className="text-xs text-red-700 w-32">Horário base</label>
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-white/50">Horário base</label>
             <input
               type="time"
-              defaultValue="18:00"
-              className="bg-red-950/20 border border-red-950 rounded px-3 py-1.5 text-sm text-red-300 focus:outline-none focus:border-red-700"
+              value={baseTime}
+              onChange={e => setBaseTime(e.target.value)}
+              className="
+                bg-white/[0.05] rounded-lg px-3 py-2 text-sm text-white/70
+                focus:outline-none focus:ring-1 focus:ring-red-500/30
+                transition-all
+              "
             />
           </div>
         </div>
       </div>
 
       {/* Queue */}
-      <div className="border border-red-950 rounded-lg overflow-hidden">
-        <div className="px-4 py-3 bg-red-950/20 border-b border-red-950 flex items-center justify-between">
-          <div className="text-xs font-bold uppercase tracking-wider text-red-500">Fila de postagem</div>
-          <span className="text-xs text-red-900">0 prontos</span>
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-xs text-white/25 font-semibold uppercase tracking-widest">
+            Fila de postagem
+          </div>
+          <span className="text-xs text-white/15">0 prontos</span>
         </div>
-        <div className="p-8 text-center bg-[#0f0303]">
-          <div className="text-red-800 text-sm">Fila vazia</div>
-          <p className="text-red-900 text-xs mt-1">Clipes com legenda prontos aparecerão aqui</p>
+        <div className="bg-white/[0.03] rounded-2xl p-14 text-center">
+          <div className="text-white/30 text-sm font-medium mb-1">Fila vazia</div>
+          <p className="text-white/15 text-xs">Clipes com legenda prontos aparecem aqui</p>
         </div>
       </div>
+
     </div>
   );
 }
